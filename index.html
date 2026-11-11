@@ -121,6 +121,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .controls-mini{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:clamp(9px,1.4vh,12px)}
 .controls-mini span:nth-child(odd){color:#c7ad93}
 .footnote{text-align:center;color:#5f4b4b;font-size:10px;letter-spacing:.08em;margin-top:clamp(8px,2vh,18px);line-height:1.6}
+.keybind-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 22px;margin:6px 0 12px}
+.keybind-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px dotted #2a1b21;padding:5px 0}
+.keybind-row>span{font-size:13px;color:#b6a294}
+.keybind-key{min-width:92px;justify-content:center}
+.keybind-key.waiting{border-color:#e0b978;color:#f0d98a;box-shadow:0 0 10px rgba(224,185,120,.25)}
+.small-note{font-size:11px;line-height:1.6;margin:2px 0 4px}
+@media (max-width:620px){.keybind-grid{grid-template-columns:1fr}}
 
 /* ---------- overlay screens ---------- */
 .screen{width:min(880px,100%);min-height:100%;margin:0 auto;display:flex;flex-direction:column;justify-content:center}
@@ -363,16 +370,67 @@ function setCanvasSize() {
 const Keys = Object.create(null);
 const Pressed = Object.create(null);
 const Input = { mouseX: VIEW_W / 2, mouseY: VIEW_H / 2, mouseDown: false, mouseClicked: false, anyKey: false };
+
+const KEYBIND_ACTIONS = [
+  ["up", "向上移动"], ["down", "向下移动"], ["left", "向左移动"], ["right", "向右移动"],
+  ["bomb", "放置炸弹"], ["active", "主动道具"], ["card", "卡牌 / 药丸"],
+  ["map", "地图"], ["inventory", "道具栏"], ["pause", "暂停"], ["restart", "长按重开"],
+];
+const DEFAULT_KEYBINDS = {
+  up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD",
+  bomb: "KeyE", active: "Space", card: "KeyQ",
+  map: "Tab", inventory: "KeyI", pause: "Escape", restart: "KeyR",
+};
+let KEYBINDS = { ...DEFAULT_KEYBINDS };
+function loadKeybinds() {
+  try {
+    const raw = localStorage.getItem("isaac_keybinds_v1");
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    for (const [action] of KEYBIND_ACTIONS) if (typeof data[action] === "string") KEYBINDS[action] = data[action];
+  } catch { /* localStorage unavailable */ }
+}
+function saveKeybinds() {
+  try { localStorage.setItem("isaac_keybinds_v1", JSON.stringify(KEYBINDS)); } catch { /* ignore */ }
+}
+function keybind(action) { return KEYBINDS[action] || ""; }
+function isActionCode(code, action) { return !!code && code === keybind(action); }
+function setKeybind(action, code) {
+  if (!KEYBINDS[action]) return;
+  for (const [other] of KEYBIND_ACTIONS) if (other !== action && KEYBINDS[other] === code) KEYBINDS[other] = "";
+  KEYBINDS[action] = code;
+  saveKeybinds();
+}
+function resetKeybinds() {
+  KEYBINDS = { ...DEFAULT_KEYBINDS };
+  saveKeybinds();
+}
+function keyLabel(code) {
+  if (!code) return "未绑定";
+  const fixed = {
+    Space: "空格", Escape: "Esc", Tab: "Tab", Backquote: "~",
+    ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→",
+    ShiftLeft: "Shift", ShiftRight: "Shift", ControlLeft: "Ctrl", ControlRight: "Ctrl",
+  };
+  if (fixed[code]) return fixed[code];
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if (/^Digit\d$/.test(code)) return code.slice(5);
+  if (/^Numpad\d$/.test(code)) return "小键盘" + code.slice(6);
+  return code;
+}
+loadKeybinds();
+
 function bindInput() {
   if (IS_HEADLESS || typeof window === "undefined" || !canvas) return;
-  const prevented = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "Tab", "KeyE", "KeyQ", "KeyI", "KeyM", "Backquote"]);
+  const prevented = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "Tab", "Backquote"]);
+  for (const [action] of KEYBIND_ACTIONS) if (KEYBINDS[action]) prevented.add(KEYBINDS[action]);
   window.addEventListener("keydown", (e) => {
     if (prevented.has(e.code)) e.preventDefault();
     if (!Keys[e.code]) Pressed[e.code] = true;
     Keys[e.code] = true; Input.anyKey = true; Audio.unlock();
-    if (e.code === "Escape") onEscape();
-    else if (e.code === "Tab" && G && G.state === "playing") { Pressed.Tab = false; openMap(); }
-    else if (e.code === "KeyI" && G && (G.state === "playing" || G.state === "paused")) { Pressed.KeyI = false; if (G.state === "inventory") resumeGame(); else openInventory(); }
+    if (e.code === "Escape" || isActionCode(e.code, "pause")) onEscape();
+    else if (isActionCode(e.code, "map") && G && G.state === "playing") { Pressed[e.code] = false; openMap(); }
+    else if (isActionCode(e.code, "inventory") && G && (G.state === "playing" || G.state === "paused")) { Pressed[e.code] = false; if (G.state === "inventory") resumeGame(); else openInventory(); }
     else if (e.code === "Backquote" && G) {
       Pressed.Backquote = false;
       if (G.state === "console") resumeGame();
@@ -461,6 +519,7 @@ const ROOM_TYPES = {
   start: { name: "起点", icon: "·" }, normal: { name: "战斗房", icon: "" },
   treasure: { name: "宝箱房", icon: "★", lock: "key" }, shop: { name: "商店", icon: "$", lock: "key" },
   boss: { name: "Boss 房", icon: "☠" }, secret: { name: "隐藏房", icon: "?", lock: "bomb" },
+  super_secret: { name: "超级隐藏房", icon: "!", lock: "bomb" },
   curse: { name: "诅咒房", icon: "†", lock: "health" }, library: { name: "图书馆", icon: "▤", lock: "key" },
   sacrifice: { name: "献祭房", icon: "✦" }, devil: { name: "恶魔房", icon: "♆" }, angel: { name: "天使房", icon: "✧" },
 };
@@ -488,6 +547,19 @@ const CHAPTERS = [
   { id: "sheol", name: "阴间", en: "SHEOL", num: 5, floor: ["#2a1518", "#1b0d0f", "#3a1b1f"], wall: "#120709", accent: "#642126", fog: "rgba(20,0,2,.40)", boss: "satan", enemies: ["gaper", "fly", "boomfly", "knight", "globin", "maw", "fatty", "pooter"] },
   { id: "cathedral", name: "大教堂", en: "CATHEDRAL", num: 6, floor: ["#4a4640", "#34312c", "#5b554b"], wall: "#211f1b", accent: "#92846c", fog: "rgba(18,16,10,.34)", boss: "isaac", enemies: ["gaper", "horf", "fly", "knight", "maw", "globin", "pooter", "fatty"] },
 ];
+const CHAPTER_BOSSES = {
+  basement: ["monstro", "larry", "duke"],
+  caves: ["gurdy", "famine", "chub"],
+  depths: ["mom", "peep", "loki"],
+  womb: ["heart", "itlives", "scolex"],
+  sheol: ["satan", "fallen", "krampus"],
+  cathedral: ["isaac", "bluebaby", "gabriel"],
+};
+for (const c of CHAPTERS) {
+  c.bosses = CHAPTER_BOSSES[c.id] || [c.boss];
+  c.boss = c.bosses[0];
+}
+
 const ENEMY_TYPES = {
   gaper: { name: "Gaper", hp: 10, speed: 1.35, contact: 1, r: 15, shape: "gaper", color: "#b98f76", ai: "chase" },
   horf: { name: "Horf", hp: 12, speed: 0, contact: 1, r: 16, shape: "horf", color: "#d9b18e", ai: "shoot", shoot: { interval: 95, speed: 3.4, count: 1, spread: 0 } },
@@ -510,6 +582,18 @@ const BOSS_DEFS = {
   heart: { name: "Mom's Heart", cn: "妈妈的心脏", hp: 520, r: 45, color: "#c9555a", shape: "heart", contact: 2 },
   satan: { name: "Satan", cn: "撒旦", hp: 620, r: 44, color: "#b4473b", shape: "satan", contact: 2 },
   isaac: { name: "Isaac", cn: "以撒", hp: 760, r: 38, color: "#d8c1a0", shape: "isaac", contact: 2 },
+  larry: { name: "Larry Jr.", cn: "拉里", hp: 220, r: 34, color: "#8a9d62", shape: "larry", contact: 2 },
+  duke: { name: "Duke of Flies", cn: "苍蝇公爵", hp: 205, r: 44, color: "#9a7b5e", shape: "duke", contact: 2 },
+  famine: { name: "Famine", cn: "饥荒", hp: 330, r: 38, color: "#c3b18a", shape: "famine", contact: 2 },
+  chub: { name: "Chub", cn: "胖虫", hp: 370, r: 52, color: "#c88f82", shape: "chub", contact: 2 },
+  peep: { name: "Peep", cn: "皮普", hp: 430, r: 40, color: "#d5c2a4", shape: "peep", contact: 2 },
+  loki: { name: "Loki", cn: "洛基", hp: 455, r: 36, color: "#c38b5e", shape: "loki", contact: 2 },
+  itlives: { name: "It Lives", cn: "它还活着", hp: 510, r: 47, color: "#b63d45", shape: "itlives", contact: 2 },
+  scolex: { name: "Scolex", cn: "斯科莱克斯", hp: 555, r: 44, color: "#c77f78", shape: "scolex", contact: 2 },
+  fallen: { name: "The Fallen", cn: "堕落者", hp: 590, r: 38, color: "#9e3f3c", shape: "fallen", contact: 2 },
+  krampus: { name: "Krampus", cn: "坎卜斯", hp: 610, r: 40, color: "#8b3d3b", shape: "krampus", contact: 2 },
+  bluebaby: { name: "???", cn: "蓝婴", hp: 720, r: 36, color: "#9dc4d4", shape: "bluebaby", contact: 2 },
+  gabriel: { name: "Gabriel", cn: "加百列", hp: 735, r: 40, color: "#e1d6ac", shape: "gabriel", contact: 2 },
 };
 
 /* ----------------------------- 4. 数据容器 ----------------------------- */
@@ -591,7 +675,7 @@ I("moms_eye", "妈妈的眼睛", "Mom's Eye", "passive", 2, "treasure", "👁️
 I("spider_bite", "蜘蛛咬伤", "Spider Bite", "passive", 3, "treasure", "🕷️", "眼泪有 20% 几率减速敌人，击杀时可能生成蜘蛛。", { tags: ["slow", "spider"], tear: { slow: 0.2 }, procs: [{ on: "kill", chance: 0.2, effects: [{ kind: "spawnFriendly", what: "spider", count: 1 }] }] });
 I("common_cold", "普通感冒", "The Common Cold", "passive", 2, "treasure", "🤧", "眼泪有 15% 几率使敌人中毒。", { tags: ["poison"], tear: { poison: 0.15 } });
 I("lokis_horns", "洛基的角", "Loki's Horns", "passive", 3, "treasure", "😈", "射击时向四个方向各发射一颗眼泪。", { tags: ["tears", "multi"], tear: { crossshot: true } });
-I("tiny_planet", "小行星", "Tiny Planet", "passive", 3, "treasure", "🪐", "眼泪会围绕你旋转。", { tags: ["tears"], tear: { orbit: 0.045 } });
+I("tiny_planet", "小行星", "Tiny Planet", "passive", 3, "treasure", "🪐", "射程大幅提升；眼泪会围绕你旋转。与硫磺火兼容：硫磺火先绕角色一圈，再朝发射方向射出。", { tags: ["tears", "range"], mods: { range: 4.5 }, tear: { orbit: 0.045 } });
 I("continuum", "连续体", "Continuum", "passive", 3, "treasure", "🌌", "眼泪会穿过墙壁并从另一侧出现。", { tags: ["tears", "spectral"], tear: { wrap: true, spectral: true } });
 I("magnetic_tears", "磁力眼泪", "Magnetic Tears", "passive", 3, "treasure", "🧲", "眼泪会被敌人吸引，并吸取掉落物。", { tags: ["tears", "magnet"], tear: { homing: 0.035 }, flags: ["magnet"] });
 I("mutant_spider", "变异蜘蛛", "Mutant Spider", "passive", 4, "treasure", "🕷️", "一次发射 4 颗眼泪，但射速与单发伤害降低。", { tags: ["tears", "multi", "spider"], mods: { shots: 3, damageMult: 0.5, fireDelay: 4.5, shotSpread: 0.1 } });
@@ -933,6 +1017,18 @@ defineTrinket("cracked_dice", "破裂骰子", "Cracked Dice", "🎲", "清理房
 defineTrinket("golden_penny", "金币", "Golden Penny", "🪙", "拾取金币时有 15% 几率获得双倍金币。", { procs: [{ on: "pickup", chance: 0.15, cond: { pickup: "coin" }, effects: [{ kind: "give", what: "coin", count: 2 }] }] });
 defineTrinket("worn_dice", "磨损的骰子", "Worn Dice", "🎲", "进入新房间时随机获得小属性提升。", { procs: [{ on: "enterRoom", chance: 0.15, effects: [{ kind: "stat", mods: { luck: 0.2 }, duration: -1 }] }] });
 
+/* Boss 房道具池扩充：强力道具也会作为 Boss 奖励出现。 */
+const BOSS_POOL_EXTRA = [
+  "brimstone", "magic_mushroom", "the_mark", "the_halo", "technology",
+  "ipecac", "dr_fetus", "epic_fetus", "moms_knife", "sacred_heart",
+  "godhead", "holy_mantle", "the_wafer", "transcendence", "the_pact",
+  "abaddon", "demon_baby", "lil_brimstone", "bloody_lust", "champion_belt",
+];
+for (const id of BOSS_POOL_EXTRA) {
+  const it = ITEMS[id];
+  if (it && !it.pools.includes("boss")) it.pools.push("boss");
+}
+
 
 /* ---- 20_engine.js ---- */
 
@@ -1093,6 +1189,9 @@ function recalcStats() {
   if (innateAzazelBrimstone) flags.add("brimstone");
   P.innateBrimstone = innateAzazelBrimstone;
   P.brimstoneInfinite = brimstoneItems > 0 || (!innateAzazelBrimstone && flags.has("brimstone"));
+  P.brimstoneStacks = brimstoneItems;
+  // 射速（fireDelay 越小越快）影响蓄力速度。
+  P.chargeMax = clamp(Math.round(42 * (P.stats.fireDelay / 13)), 12, 90);
   P.attackType = flags.has("epic_fetus") ? "epic_fetus" : flags.has("brimstone") ? "brimstone" : flags.has("knife") ? "knife" : flags.has("tech") ? "tech" : flags.has("dr_fetus") ? "dr_fetus" : "tear";
   P.flying = flags.has("flying") || !!P.char.flying;
   P.maxRed = Math.max(0, P.maxRed);
@@ -1388,6 +1487,7 @@ function fireEvent(eventName, context = {}) {
  * ===================================================================== */
 function createRun(charId, opts = {}) {
   const char = CHARACTERS.find((c) => c.id === charId) || CHARACTERS[0];
+  const manualSeed = opts.seedLocked != null ? !!opts.seedLocked : (opts.seed != null && String(opts.seed).trim() !== "");
   const seedStr = opts.seed != null && String(opts.seed).trim() !== "" ? String(opts.seed).trim() : String(Date.now()).slice(-8);
   const seed = /^\d+$/.test(seedStr) ? (parseInt(seedStr, 10) >>> 0) : hashStr(seedStr);
   srand(seed);
@@ -1402,7 +1502,7 @@ function createRun(charId, opts = {}) {
     transforms: new Set(), _transformNotified: new Set(), stats: { ...BASE_STATS },
   };
   G = {
-    seed, seedStr, seedDisplay: String(seed), charId: char.id, difficulty: opts.difficulty || "normal", player: P,
+    seed, seedStr, seedDisplay: String(seed), seedLocked: manualSeed, charId: char.id, difficulty: opts.difficulty || "normal", player: P,
     frame: 0, time: 0, state: "playing", started: false, floorIndex: 0, floor: null, room: null,
     currentRoom: null, roomSerial: 0, enemies: [], tears: [], enemyShots: [], bombs: [],
     particles: [], pickups: [], pedestals: [], familiars: [], orbitals: [], creeps: [], beams: [],
@@ -1439,7 +1539,7 @@ function startRun() {
   createRun(menuState.char, { seed: menuState.seed, difficulty: menuState.difficulty });
   G.floorTitle = 120; G.message = "献祭自己，或者被献祭。"; G.messageTimer = 220;
   Audio.boss();
-  toast("WASD 移动，方向键/鼠标射击，E 放炸弹，空格使用主动，Q 使用卡牌", 5000);
+  toast(`${keyLabel(keybind("up"))}${keyLabel(keybind("left"))}${keyLabel(keybind("down"))}${keyLabel(keybind("right"))} 移动，方向键/鼠标射击，${keyLabel(keybind("bomb"))} 炸弹，${keyLabel(keybind("active"))} 主动，${keyLabel(keybind("card"))} 卡牌`, 5000);
 }
 function onEscape() {
   if (!G) { if (overlayEl && !overlayEl.classList.contains("hidden")) showTitle(); return; }
@@ -1556,6 +1656,42 @@ const ROOM_LAYOUTS = [
 ];
 function roomKey(x, y) { return x + "," + y; }
 
+function freeNeighborOf(room, rooms) {
+  for (const d of DIR_ORDER) {
+    const nx = room.gx + DIRS[d].x, ny = room.gy + DIRS[d].y;
+    if (nx < 0 || nx > 8 || ny < 0 || ny > 8) continue;
+    const key = roomKey(nx, ny);
+    if (!rooms.has(key)) return { d, nx, ny, key };
+  }
+  return null;
+}
+function addLeafRoom(rooms, base) {
+  const spot = freeNeighborOf(base, rooms);
+  if (!spot) return false;
+  const room = {
+    gx: spot.nx, gy: spot.ny, type: "normal", key: spot.key, doors: {},
+    visited: false, cleared: false, init: false, enemies: [], pickups: [],
+    pedestals: [], obstacles: [], hazards: [], decor: [], unlocked: {},
+    bossSpawned: false, trapdoor: null,
+  };
+  rooms.set(room.key, room);
+  base.doors[spot.d] = { to: room.key };
+  room.doors[DIRS[spot.d].opp] = { to: base.key };
+  return true;
+}
+function ensureDeadEnds(rooms, start, boss, desired) {
+  let guard = 0;
+  while (guard++ < 24) {
+    const ends = [...rooms.values()].filter((r) => r !== start && r !== boss && Object.keys(r.doors).length === 1);
+    if (ends.length >= desired) return;
+    const candidates = [...rooms.values()]
+      .filter((r) => r !== boss && freeNeighborOf(r, rooms))
+      .sort((a, b) => Object.keys(b.doors).length - Object.keys(a.doors).length);
+    if (!candidates.length) return;
+    if (!addLeafRoom(rooms, candidates[0])) return;
+  }
+}
+
 function generateFloor(index) {
   const chapter = CHAPTERS[clamp(index, 0, CHAPTERS.length - 1)];
   const targetCount = clamp(9 + index + randInt(0, 2), 9, 14);
@@ -1601,10 +1737,26 @@ function generateFloor(index) {
   boss.type = "boss";
   const freeEnds = shuffle(deadEnds.filter((r) => r !== boss && r !== start));
   const assign = (type) => { const r = freeEnds.shift(); if (r) { r.type = type; return r; } return null; };
-  assign("treasure"); assign("shop"); assign("secret");
-  if (index >= 1 && chance(0.5)) assign("curse");
-  if (chance(0.45)) assign("library");
-  if (chance(0.4)) assign("sacrifice");
+  assign("treasure"); assign("shop");
+  // 每层保证一个隐藏房和一个超级隐藏房；若死路不足，补出额外的死路房间。
+  ensureDeadEnds(rooms, start, boss, 2);
+  const secretEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && r.type === "normal" && degree(r) === 1));
+  if (secretEnds[0]) secretEnds[0].type = "secret";
+  if (secretEnds[1]) secretEnds[1].type = "super_secret";
+  // 若极端情况下仍没有两个死路，则从普通房间中保底指定，确保每层两类房都存在。
+  if (![...rooms.values()].some((r) => r.type === "secret")) {
+    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss);
+    if (r) r.type = "secret";
+  }
+  if (![...rooms.values()].some((r) => r.type === "super_secret")) {
+    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss);
+    if (r) r.type = "super_secret";
+  }
+  const optionalEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && r.type === "normal" && degree(r) === 1));
+  const assignOptional = (type) => { const r = optionalEnds.shift(); if (r) { r.type = type; return r; } return null; };
+  if (index >= 1 && chance(0.5)) assignOptional("curse");
+  if (chance(0.45)) assignOptional("library");
+  if (chance(0.4)) assignOptional("sacrifice");
   const floor = { index, chapter, rooms, startRoom: start, bossRoom: boss, explored: new Set([start.key]), mapReveal: false, specialReveal: false, floorKills: 0, floorStartTime: G.time };
   G.floor = floor; G.floorIndex = index;
   G.devilChance = clamp(0.35 + index * 0.06 + (G.player.flags.has("devil_luck") ? 0.12 : 0), 0, 0.95);
@@ -1633,7 +1785,7 @@ function roomItemLootCount(room) {
 
 function chooseLayout(room) {
   if (["start", "boss", "treasure", "shop", "devil", "angel"].includes(room.type)) return ROOM_LAYOUTS[0];
-  if (room.type === "secret") return pick([ROOM_LAYOUTS[1], ROOM_LAYOUTS[3], ROOM_LAYOUTS[7]]);
+  if (room.type === "secret" || room.type === "super_secret") return pick([ROOM_LAYOUTS[1], ROOM_LAYOUTS[3], ROOM_LAYOUTS[7]]);
   if (room.type === "library") return ROOM_LAYOUTS[3];
   if (room.type === "curse" || room.type === "sacrifice") return ROOM_LAYOUTS[8];
   const base = pick(ROOM_LAYOUTS);
@@ -1706,6 +1858,12 @@ function initRoom(room) {
     spawnPickup(chance(0.5) ? "key" : "bomb", ROOM_CENTER_X + 60, ROOM_CENTER_Y, { room });
     if (chance(0.35)) spawnPedestal(ROOM_CENTER_X, ROOM_CENTER_Y - 40, rollItem("secret"), { noPrice: true, room });
     room.cleared = true;
+  } else if (room.type === "super_secret") {
+    // 超级隐藏房：两个道具基座，品质更高。
+    spawnPedestal(ROOM_CENTER_X - 90, ROOM_CENTER_Y - 20, rollItem("secret", { minQuality: 3 }), { noPrice: true, room });
+    spawnPedestal(ROOM_CENTER_X + 90, ROOM_CENTER_Y - 20, rollItem("angel", { minQuality: 3 }), { noPrice: true, room });
+    spawnPickup("soul", ROOM_CENTER_X, ROOM_CENTER_Y + 74, { room });
+    room.cleared = true;
   } else if (room.type === "curse") {
     spawnPedestal(ROOM_CENTER_X, ROOM_CENTER_Y, rollItem("curse"), { price: { hearts: 1 }, room });
     for (const [x, y] of [[3, 2], [9, 2], [3, 4], [9, 4]]) if (!room.solids[y][x]) room.hazards.push({ type: "spike", tx: x, ty: y, x: (x + 0.5) * TILE, y: (y + 0.5) * TILE, r: 22, cool: 0 });
@@ -1760,6 +1918,7 @@ function rollItem(pool, opts = {}) {
   let candidates = poolItems(pool);
   if (pool === "library") candidates = ITEM_ORDER.filter((it) => it.type === "active" && (it.tags.includes("book") || it.tags.includes("active")));
   if (P.flags.has("chaos") || pool === "chaos") candidates = ITEM_ORDER.slice();
+  if (opts.minQuality) candidates = candidates.filter((it) => (it.quality || 1) >= opts.minQuality);
   let unowned = candidates.filter((it) => !P.items.includes(it.id));
   if (!unowned.length) candidates = ITEM_ORDER.filter((it) => !P.items.includes(it.id));
   if (!candidates.length) candidates = ITEM_ORDER.slice();
@@ -1820,10 +1979,13 @@ function enterRoom(room, opts = {}) {
   G.shake = 0; G.roomEnterFlash = 14;
   if (room.type === "boss" && !room.cleared && !room.bossSpawned) {
     room.bossSpawned = true;
-    spawnBoss(CHAPTERS[G.floorIndex].boss);
+    const chapter = CHAPTERS[G.floorIndex];
+    const bossPool = chapter.bosses && chapter.bosses.length ? chapter.bosses : [chapter.boss];
+    room.bossId = room.bossId || pick(bossPool);
+    spawnBoss(room.bossId);
     G.boss = room.enemies.find((e) => e.boss) || null;
     Audio.boss();
-    G.message = BOSS_DEFS[CHAPTERS[G.floorIndex].boss].name + " 挡住了去路";
+    G.message = BOSS_DEFS[room.bossId].name + " 挡住了去路";
     G.messageTimer = 170;
   }
   fireEvent("enterRoom", { room });
@@ -1969,7 +2131,7 @@ function openBombDoorNear(x, y) {
     const door = room.doors[d];
     if (!door) continue;
     const target = G.floor.rooms.get(door.to);
-    if (!target || target.type !== "secret" || room.unlocked[d]) continue;
+    if (!target || (target.type !== "secret" && target.type !== "super_secret") || room.unlocked[d]) continue;
     let dx = ROOM_CENTER_X, dy = ROOM_CENTER_Y;
     if (d === "n") { dx = ROOM_CENTER_X; dy = 0; }
     if (d === "s") { dx = ROOM_CENTER_X; dy = ARENA_H; }
@@ -2325,8 +2487,8 @@ function updatePlayer() {
   if (G.doorCd > 0) G.doorCd--;
   if (P.fireCd > 0) P.fireCd--;
   let mx = 0, my = 0;
-  if (Keys.KeyA) mx -= 1; if (Keys.KeyD) mx += 1;
-  if (Keys.KeyW) my -= 1; if (Keys.KeyS) my += 1;
+  if (Keys[keybind("left")]) mx -= 1; if (Keys[keybind("right")]) mx += 1;
+  if (Keys[keybind("up")]) my -= 1; if (Keys[keybind("down")]) my += 1;
   if (mx || my) { const n = norm(mx, my); mx = n.x; my = n.y; P.walking += 0.14; } else P.walking += 0.03;
   P.vx = lerp(P.vx, mx * P.stats.speed, 0.28);
   P.vy = lerp(P.vy, my * P.stats.speed, 0.28);
@@ -2339,9 +2501,9 @@ function updatePlayer() {
     if (wantsFire() && P.fireCd <= 0) fireWeapon();
   }
   // 操作：E 放炸弹，空格使用主动道具；Q 使用卡牌/药丸。
-  if (wasPressed("KeyE")) dropBomb();
-  if (wasPressed("Space")) useActive();
-  if (wasPressed("KeyQ")) useConsumable();
+  if (wasPressed(keybind("bomb"))) dropBomb();
+  if (wasPressed(keybind("active"))) useActive();
+  if (wasPressed(keybind("card"))) useConsumable();
   collectNearby();
   // 站在活板门上会自动下层，不需要像素级对齐；离开则取消。
   if (G.room.trapdoor && G.room.trapdoor.open && dist(P.x, P.y, G.room.trapdoor.x, G.room.trapdoor.y) < 40) {
@@ -2400,12 +2562,13 @@ function fireBrimstone(chargeRatio = 1) {
   const P = G.player, s = P.stats;
   const ratio = clamp(chargeRatio, 0, 1);
   const power = 0.45 + ratio * 0.55;
-  const rangeTiles = P.brimstoneInfinite ? 40 : 4.2;
+  const rangeTiles = P.brimstoneInfinite ? 40 : Math.max(4.2, (s.range || 6.5) * 0.9);
   // 追踪不负责“锁定发射方向”，而是让光束在持续期间弯曲追踪敌人。
+  const stackWidth = 1 + Math.max(0, (P.brimstoneStacks || 0) - 1) * 0.38;
   for (let i = 0; i < s.shots; i++) {
     const off = (i - (s.shots - 1) / 2) * Math.max(0.06, s.shotSpread || 0.08);
-    fireLaser(P.aim + off, s.damage * 3 * power, (20 + s.tearSize * 4) * (0.65 + ratio * 0.35), rangeTiles, {
-      color: "#c83f48", chargeRatio: ratio, brimstone: true, pierceWalls: true,
+    fireLaser(P.aim + off, s.damage * 3 * power, (20 + s.tearSize * 4) * (0.65 + ratio * 0.35) * stackWidth, rangeTiles, {
+      color: "#c83f48", chargeRatio: ratio, brimstone: true, pierceWalls: true, orbit: !!P.tear.orbit,
     });
   }
   P.fireCd = 0;
@@ -2467,7 +2630,7 @@ function fireLaser(angle, damage, width, rangeTiles, opts = {}) {
       life: 30, maxLife: 30, hits: new Set(), hitOnce: new Set(), curveHit: new Set(),
       color: opts.color || "#c83f48", brimstone: true, pierceWalls: true,
       ticksLeft: 9, tickTimer: 0, homing: (P.tear && P.tear.homing) || 0,
-      curveAngle: angle, path: [{ x: P.x, y: P.y }], range: length,
+      orbit: !!opts.orbit, curveAngle: angle, path: [{ x: P.x, y: P.y }], range: length,
     };
     buildBrimstonePath(beam);
     G.beams.push(beam);
@@ -2526,6 +2689,26 @@ function buildBrimstonePath(b) {
   const P = G.player;
   b.x = P.x; b.y = P.y;
   const step = 20;
+  // 小行星：先绕角色整整一圈，再沿发射方向直线射出。
+  if (b.orbit) {
+    const base = b.angle, radius = 56, ramp = 4, circle = 30;
+    b.path = [{ x: P.x, y: P.y }];
+    for (let i = 1; i <= ramp; i++) {
+      const r = radius * i / ramp;
+      b.path.push({ x: P.x + Math.cos(base) * r, y: P.y + Math.sin(base) * r });
+    }
+    for (let i = 1; i <= circle; i++) {
+      const a = base + (i / circle) * TAU;
+      b.path.push({ x: P.x + Math.cos(a) * radius, y: P.y + Math.sin(a) * radius });
+    }
+    const end = b.path[b.path.length - 1];
+    const forward = Math.max(0, b.range - TAU * radius) / step;
+    for (let i = 0; i < Math.min(120, Math.ceil(forward)); i++) {
+      b.path.push({ x: end.x + Math.cos(base) * step * (i + 1), y: end.y + Math.sin(base) * step * (i + 1) });
+    }
+    b.length = b.path.length * step;
+    return;
+  }
   const count = Math.max(2, Math.min(120, Math.ceil(b.range / step)));
   // 每帧都从基础方向重新构建一条完整曲线。目标集合只在本帧内使用，
   // 这样光束在整个持续期间都会弯曲追踪，而不是第一帧之后变成直线。
@@ -2653,10 +2836,10 @@ function checkDoorTouch(mx, my) {
   if (G.doorCd > 0 || !G.room) return;
   // 只有站在门洞范围内才会换房，不能贴着任意一段墙就穿门。
   const doorHalf = 58;
-  if (P.y < 32 && Math.abs(P.x - ROOM_CENTER_X) < doorHalf && (my < -0.2 || Keys.ArrowUp)) tryDoor("n");
-  else if (P.y > ARENA_H - 32 && Math.abs(P.x - ROOM_CENTER_X) < doorHalf && (my > 0.2 || Keys.ArrowDown)) tryDoor("s");
-  else if (P.x < 32 && Math.abs(P.y - ROOM_CENTER_Y) < doorHalf && (mx < -0.2 || Keys.ArrowLeft)) tryDoor("w");
-  else if (P.x > ARENA_W - 32 && Math.abs(P.y - ROOM_CENTER_Y) < doorHalf && (mx > 0.2 || Keys.ArrowRight)) tryDoor("e");
+  if (P.y < 32 && Math.abs(P.x - ROOM_CENTER_X) < doorHalf && (my < -0.2 || Keys.ArrowUp || Keys[keybind("up")])) tryDoor("n");
+  else if (P.y > ARENA_H - 32 && Math.abs(P.x - ROOM_CENTER_X) < doorHalf && (my > 0.2 || Keys.ArrowDown || Keys[keybind("down")])) tryDoor("s");
+  else if (P.x < 32 && Math.abs(P.y - ROOM_CENTER_Y) < doorHalf && (mx < -0.2 || Keys.ArrowLeft || Keys[keybind("left")])) tryDoor("w");
+  else if (P.x > ARENA_W - 32 && Math.abs(P.y - ROOM_CENTER_Y) < doorHalf && (mx > 0.2 || Keys.ArrowRight || Keys[keybind("right")])) tryDoor("e");
 }
 function ensureGroundPosition() {
   const P = G.player, room = G.room;
@@ -3108,6 +3291,108 @@ function updateBoss(e) {
       }
       e.x = lerp(e.x, ROOM_CENTER_X + Math.sin(e.t * 0.012) * 180, 0.02); e.y = lerp(e.y, 160 + Math.cos(e.t * 0.017) * 50, 0.02);
     }
+  } else {
+    updateBossGeneric(e);
+  }
+}
+
+function updateBossGeneric(e) {
+  const P = G.player, id = e.bossId;
+  const a = Math.atan2(P.y - e.y, P.x - e.x), d = dist(e.x, e.y, P.x, P.y);
+  const fast = e.phase >= 2;
+  e.attackTimer = (e.attackTimer || 0) - 1;
+  e.shootTimer = (e.shootTimer || 0) - 1;
+  if (id === "larry") {
+    if (d > 90) moveEntity(e, Math.cos(a) * 1.15, Math.sin(a) * 1.15, { flying: true });
+    if (e.shootTimer <= 0) { e.shootTimer = fast ? 55 : 80; shootPattern(e, 3, 3.0, 0.22, 0, "#b6c978"); }
+  } else if (id === "duke") {
+    e.x = lerp(e.x, ROOM_CENTER_X, 0.03); e.y = lerp(e.y, 175, 0.03);
+    if (e.shootTimer <= 0) {
+      e.shootTimer = fast ? 60 : 90;
+      spawnBossShotRing(e.x, e.y, fast ? 12 : 8, 2.6, rng() * TAU, "#c3a36f");
+      if (chance(0.45)) spawnEnemy("fly", e.x + rand(-40, 40), e.y + rand(20, 50));
+    }
+  } else if (id === "famine") {
+    if (e.state === "dash") {
+      moveEntity(e, e.vx, e.vy, { flying: true });
+      if (e.stateT <= 0) { e.state = "idle"; e.attackTimer = fast ? 50 : 75; }
+    } else {
+      if (d > 120) moveEntity(e, Math.cos(a) * 0.8, Math.sin(a) * 0.8, { flying: true });
+      if (e.attackTimer <= 0) {
+        e.state = "dash"; e.stateT = 24; e.vx = Math.cos(a) * 4.6; e.vy = Math.sin(a) * 4.6;
+        G.telegraphs.push({ x: e.x, y: e.y, targetX: e.x + e.vx * 10, targetY: e.y + e.vy * 10, r: 50, life: 24, maxLife: 24, type: "jump" });
+      }
+      if (e.shootTimer <= 0) { e.shootTimer = 120; shootPattern(e, 1, 3.4, 0, 0, "#d8c193"); }
+    }
+  } else if (id === "chub") {
+    if (e.state === "hop") {
+      const t = clamp(1 - e.stateT / 28, 0, 1);
+      e.x = lerp(e.hopX, e.jumpX, t); e.y = lerp(e.hopY, e.jumpY, t);
+      if (e.stateT <= 0) { e.state = "idle"; spawnBossShotRing(e.x, e.y, fast ? 10 : 7, 2.5, rng() * TAU, "#d59b8d"); }
+    } else {
+      if (d > 90) moveEntity(e, Math.cos(a) * 1.0, Math.sin(a) * 1.0, { flying: true });
+      if (e.attackTimer <= 0) {
+        e.attackTimer = fast ? 80 : 120; e.state = "hop"; e.stateT = 28;
+        e.hopX = e.x; e.hopY = e.y; e.jumpX = clamp(P.x, 100, ARENA_W - 100); e.jumpY = clamp(P.y, 100, ARENA_H - 120);
+      }
+    }
+  } else if (id === "peep") {
+    e.x = lerp(e.x, ROOM_CENTER_X + Math.sin(e.t * 0.01) * 130, 0.02); e.y = lerp(e.y, 190, 0.02);
+    if (e.shootTimer <= 0) { e.shootTimer = fast ? 55 : 80; spawnBossShotRing(e.x, e.y, fast ? 8 : 6, 2.8, rng() * TAU, "#e1cba7"); }
+  } else if (id === "loki") {
+    e.attackTimer--;
+    if (e.attackTimer <= 0) {
+      e.attackTimer = fast ? 65 : 100;
+      e.x = rand(150, ARENA_W - 150); e.y = rand(120, ARENA_H - 160);
+      spawnParticles(e.x, e.y, 24, "#d3a06b", 2, 30);
+      shootPattern(e, 3, 3.2, 0.35, 0, "#d9a270");
+    }
+  } else if (id === "itlives") {
+    e.x = lerp(e.x, ROOM_CENTER_X, 0.03); e.y = lerp(e.y, 180, 0.03);
+    if (e.shootTimer <= 0) { e.shootTimer = fast ? 55 : 80; spawnBossShotRing(e.x, e.y, fast ? 14 : 9, 2.7, rng() * TAU, "#ce5b62"); }
+    if (e.attackTimer <= 0) { e.attackTimer = 150; spawnEnemy("pooter", e.x + rand(-100, 100), e.y + rand(20, 70)); }
+  } else if (id === "scolex") {
+    if (e.state === "dash") {
+      moveEntity(e, e.vx, e.vy, { flying: true });
+      if (e.stateT <= 0) { e.state = "idle"; e.attackTimer = 45; }
+    } else {
+      e.x = lerp(e.x, ROOM_CENTER_X, 0.02); e.y = lerp(e.y, 190, 0.02);
+      if (e.attackTimer <= 0) {
+        e.attackTimer = fast ? 55 : 80; e.state = "dash"; e.stateT = 25;
+        const dir = pick([0, Math.PI / 2, Math.PI, -Math.PI / 2]);
+        e.vx = Math.cos(dir) * 5.2; e.vy = Math.sin(dir) * 5.2;
+        spawnBossShotRing(e.x, e.y, fast ? 10 : 7, 2.5, dir, "#d3978c");
+      }
+    }
+  } else if (id === "fallen") {
+    if (e.state === "dash") {
+      moveEntity(e, e.vx, e.vy, { flying: true });
+      if (e.stateT <= 0) { e.state = "idle"; e.attackTimer = 50; }
+    } else {
+      if (d > 130) moveEntity(e, Math.cos(a) * 1.25, Math.sin(a) * 1.25, { flying: true });
+      if (e.shootTimer <= 0) { e.shootTimer = 80; shootPattern(e, 3, 3.3, 0.2, 0, "#c9574f"); }
+      if (e.attackTimer <= 0) { e.attackTimer = 95; e.state = "dash"; e.stateT = 18; e.vx = Math.cos(a) * 5.4; e.vy = Math.sin(a) * 5.4; }
+    }
+  } else if (id === "krampus") {
+    e.x = lerp(e.x, ROOM_CENTER_X, 0.02); e.y = lerp(e.y, 185, 0.02);
+    if (e.attackTimer <= 0) {
+      e.attackTimer = fast ? 75 : 110;
+      if (chance(0.5)) {
+        G.telegraphs.push({ x: P.x, y: P.y, r: 0, life: 38, maxLife: 38, type: "holybeam", angle: a });
+      } else spawnBossShotRing(e.x, e.y, fast ? 12 : 8, 2.8, rng() * TAU, "#d05c58");
+    }
+  } else if (id === "bluebaby") {
+    e.x = lerp(e.x, ROOM_CENTER_X + Math.sin(e.t * 0.015) * 150, 0.03); e.y = lerp(e.y, 170, 0.03);
+    if (e.shootTimer <= 0) { e.shootTimer = fast ? 34 : 50; shootPattern(e, fast ? 2 : 1, 3.1, 0.12, 0, "#a9d0dd"); }
+    if (e.attackTimer <= 0) { e.attackTimer = 100; e.x = rand(160, ARENA_W - 160); e.y = rand(120, 210); spawnParticles(e.x, e.y, 22, "#9dc4d4", 2, 30); }
+  } else if (id === "gabriel") {
+    e.x = lerp(e.x, ROOM_CENTER_X + Math.sin(e.t * 0.009) * 150, 0.02); e.y = lerp(e.y, 155, 0.02);
+    if (e.attackTimer <= 0) {
+      e.attackTimer = fast ? 65 : 95;
+      if (chance(0.45)) G.telegraphs.push({ x: P.x, y: P.y, r: 0, life: 36, maxLife: 36, type: "holybeam", angle: a });
+      else G.telegraphs.push({ x: P.x, y: P.y, r: 64, life: 32, maxLife: 32, type: "holy", damage: 2 });
+    }
+    if (e.shootTimer <= 0) { e.shootTimer = 90; spawnBossShotRing(e.x, e.y, fast ? 10 : 7, 2.4, rng() * TAU, "#f0e0a8"); }
   }
 }
 function updateTelegraphs() {
@@ -3609,6 +3894,52 @@ function drawBoss(e) {
     ctx.fillStyle = "#4b3428"; ctx.beginPath(); ctx.arc(0, -18, 30, Math.PI, TAU); ctx.fill();
     ctx.fillStyle = "#2a1a17"; ctx.beginPath(); ctx.arc(-11, -2, 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(11, -2, 4, 0, TAU); ctx.fill();
     ctx.fillStyle = "rgba(130,190,220,.7)"; ctx.beginPath(); ctx.moveTo(-8, 2); ctx.lineTo(-4, 18); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(8, 2); ctx.lineTo(4, 18); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill();
+  } else {
+    const col = hurt ? "#f2d8c8" : e.color;
+    if (e.bossId === "larry") {
+      for (let i = 2; i >= 0; i--) {
+        ctx.fillStyle = i === 0 ? col : "#6f8050";
+        ctx.beginPath(); ctx.ellipse(0, i * 18, 28 - i * 4, 22 - i * 3, 0, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = "#241414"; ctx.beginPath(); ctx.arc(-8, -6, 3, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(8, -6, 3, 0, TAU); ctx.fill();
+    } else if (e.bossId === "itlives") {
+      drawHeartShape(0, -20, 80, col, "#40171b");
+      ctx.fillStyle = "#43151b"; ctx.beginPath(); ctx.arc(-13, 0, 5, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(13, 0, 5, 0, TAU); ctx.fill();
+    } else if (e.bossId === "gabriel") {
+      ctx.fillStyle = "rgba(250,245,220,.45)";
+      ctx.beginPath(); ctx.ellipse(-28, -4, 20, 38, -0.45, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(28, -4, 20, 38, 0.45, 0, TAU); ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 28, 38, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#d8bd72"; ctx.beginPath(); ctx.arc(0, -34, 10, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#33251c"; ctx.beginPath(); ctx.arc(-8, -6, 3, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(8, -6, 3, 0, TAU); ctx.fill();
+    } else if (e.bossId === "duke") {
+      ctx.fillStyle = "rgba(220,220,210,.28)"; ctx.beginPath(); ctx.ellipse(-28, -18, 18, 10, -0.4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(28, -18, 18, 10, 0.4, 0, TAU); ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 44, 38, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#34241d"; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.arc(i * 12, -12, 3.5, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = "#2b1b17"; ctx.beginPath(); ctx.ellipse(0, 14, 16, 8, 0, 0, TAU); ctx.fill();
+    } else if (e.bossId === "chub" || e.bossId === "scolex") {
+      for (let i = 2; i >= 0; i--) {
+        ctx.fillStyle = i === 0 ? col : "#a85f5c";
+        ctx.beginPath(); ctx.ellipse(0, i * 15, 42 - i * 7, 34 - i * 6, 0, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = "#321b1c"; ctx.beginPath(); ctx.arc(-13, -10, 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(13, -10, 4, 0, TAU); ctx.fill();
+    } else if (e.bossId === "fallen" || e.bossId === "krampus") {
+      ctx.fillStyle = "#241315"; ctx.beginPath(); ctx.moveTo(-22, -26); ctx.lineTo(-36, -52); ctx.lineTo(-8, -38); ctx.fill(); ctx.beginPath(); ctx.moveTo(22, -26); ctx.lineTo(36, -52); ctx.lineTo(8, -38); ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 34, 42, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#f0d29b"; ctx.beginPath(); ctx.arc(-11, -8, 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(11, -8, 4, 0, TAU); ctx.fill();
+    } else if (e.bossId === "peep" || e.bossId === "bluebaby") {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, -2, 36, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#2b1b1b"; ctx.beginPath(); ctx.arc(-13, -8, 5, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(13, -8, 5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = "#5b3b34"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 10, 10, 0.15, Math.PI - 0.15); ctx.stroke();
+    } else if (e.bossId === "famine") {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 32, 44, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#4b372e"; ctx.beginPath(); ctx.ellipse(0, 25, 17, 10, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#2c1818"; ctx.beginPath(); ctx.arc(-11, -14, 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(11, -14, 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#b89b72"; ctx.beginPath(); ctx.moveTo(-16, -38); ctx.lineTo(-26, -58); ctx.lineTo(-6, -45); ctx.fill(); ctx.beginPath(); ctx.moveTo(16, -38); ctx.lineTo(26, -58); ctx.lineTo(6, -45); ctx.fill();
+    } else {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 38, 40, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#2a1616"; ctx.beginPath(); ctx.arc(-12, -8, 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(12, -8, 4, 0, TAU); ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -3886,7 +4217,7 @@ function drawMinimap() {
     const x = ox + r.gx * (cw + gap), y = oy + r.gy * (cw + gap);
     ctx.fillStyle = r.key === G.room.key ? "#3b2429" : "#171014"; ctx.fillRect(x, y, cw, cw);
     ctx.strokeStyle = r.key === G.room.key ? "#d29a78" : "#4a343b"; ctx.strokeRect(x, y, cw, cw);
-    const icon = r.type === "boss" ? "☠" : r.type === "treasure" ? "★" : r.type === "shop" ? "$" : r.type === "secret" && (floor.mapReveal || floor.specialReveal) ? "?" : r.type === "devil" ? "♆" : r.type === "angel" ? "✧" : r.type === "curse" ? "†" : r.type === "library" ? "▤" : r.type === "sacrifice" ? "✦" : "";
+    const icon = r.type === "boss" ? "☠" : r.type === "treasure" ? "★" : r.type === "shop" ? "$" : r.type === "super_secret" && (floor.mapReveal || floor.specialReveal) ? "!" : r.type === "secret" && (floor.mapReveal || floor.specialReveal) ? "?" : r.type === "devil" ? "♆" : r.type === "angel" ? "✧" : r.type === "curse" ? "†" : r.type === "library" ? "▤" : r.type === "sacrifice" ? "✦" : "";
     if (icon) { ctx.fillStyle = r.type === "boss" ? "#c95b55" : r.type === "treasure" ? "#e0c36d" : r.type === "shop" ? "#88bf86" : "#b396d8"; ctx.font = "7px serif"; ctx.textAlign = "center"; ctx.fillText(icon, x + cw / 2, y + 8); }
     // 未拾取资源：左上角金点 + 右下角数量
     const loot = roomLootCount(r);
@@ -4026,13 +4357,14 @@ function showTitle() {
           <button class="btn primary" id="start-btn">开始献祭</button>
           <button class="btn" id="compendium-btn">道具图鉴</button>
           <button class="btn" id="help-btn">玩法说明</button>
+          <button class="btn" id="keybind-btn">键位设置</button>
           <button class="btn" id="mute-btn">${Audio.muted ? "开启声音" : "静音"}</button>
         </div>
       </section>
       <aside class="panel side-panel">
         <div class="panel-title"><span>局内信息</span><span class="mono dim">SCOPE</span></div>
         <div class="side-list">
-          <div class="row"><span>章节</span><b>6 层 · 6 Boss</b></div>
+          <div class="row"><span>章节</span><b>6 层 · 18 Boss（每层 3 选 1）</b></div>
           <div class="row"><span>道具</span><b>${ITEM_ORDER.length} 件</b></div>
           <div class="row"><span>饰品</span><b>${TRINKET_ORDER.length} 件</b></div>
           <div class="row"><span>卡牌 / 药丸</span><b>${CARD_ORDER.length} / ${PILL_ORDER.length}</b></div>
@@ -4041,14 +4373,15 @@ function showTitle() {
         </div>
         <hr class="sep">
         <div class="controls-mini">
-          <span><span class="kbd">WASD</span></span><span>移动</span>
+          <span><span class="kbd">${keyLabel(keybind("up"))}${keyLabel(keybind("left"))}${keyLabel(keybind("down"))}${keyLabel(keybind("right"))}</span></span><span>移动</span>
           <span><span class="kbd">方向键</span></span><span>射击</span>
           <span><span class="kbd">鼠标</span></span><span>瞄准 / 射击</span>
-          <span><span class="kbd">E</span></span><span>炸弹</span>
-          <span><span class="kbd">空格</span></span><span>主动道具</span>
-          <span><span class="kbd">Q</span></span><span>卡牌 / 药丸</span>
-          <span><span class="kbd">Tab</span></span><span>地图</span>
-          <span><span class="kbd">I</span></span><span>道具栏</span>
+          <span><span class="kbd">${keyLabel(keybind("bomb"))}</span></span><span>炸弹</span>
+          <span><span class="kbd">${keyLabel(keybind("active"))}</span></span><span>主动道具</span>
+          <span><span class="kbd">${keyLabel(keybind("card"))}</span></span><span>卡牌 / 药丸</span>
+          <span><span class="kbd">${keyLabel(keybind("map"))}</span></span><span>地图</span>
+          <span><span class="kbd">${keyLabel(keybind("inventory"))}</span></span><span>道具栏</span>
+          <span><span class="kbd">长按 ${keyLabel(keybind("restart"))}</span></span><span>重开</span>
         </div>
       </aside>
     </div>
@@ -4079,8 +4412,56 @@ function showTitle() {
   if (compBtn) compBtn.addEventListener("click", () => openCompendium(showTitle));
   const helpBtn = overlayEl.querySelector("#help-btn");
   if (helpBtn) helpBtn.addEventListener("click", () => showHelp(showTitle));
+  const keybindBtn = overlayEl.querySelector("#keybind-btn");
+  if (keybindBtn) keybindBtn.addEventListener("click", () => openKeybinds(showTitle));
   const muteBtn = overlayEl.querySelector("#mute-btn");
   if (muteBtn) muteBtn.addEventListener("click", () => { Audio.toggleMute(); showTitle(); });
+}
+
+function openKeybinds(back) {
+  overlayEl.classList.remove("hidden");
+  const rows = KEYBIND_ACTIONS.map(([action, label]) => `
+    <div class="keybind-row">
+      <span>${label}</span>
+      <button class="btn small keybind-key" data-bind="${action}">${keyLabel(keybind(action))}</button>
+    </div>`).join("");
+  overlayEl.innerHTML = `
+  <div class="screen">
+    <div class="screen-head">
+      <div class="kicker">CONTROLS</div>
+      <h2>键位设置</h2>
+      <p>点击右侧按键后按下新键。与其他动作冲突时，旧动作会变为“未绑定”。</p>
+    </div>
+    <section class="panel">
+      <div class="keybind-grid">${rows}</div>
+      <p class="dim small-note">方向键固定用于射击/瞄准；鼠标始终可以瞄准。长按“重开”键会重新开始本局。</p>
+      <div class="menu-actions">
+        <button class="btn" id="keybind-reset">恢复默认</button>
+        <button class="btn primary" id="keybind-back">返回主菜单</button>
+      </div>
+    </section>
+  </div>`;
+  overlayEl.querySelectorAll("[data-bind]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.getAttribute("data-bind");
+      btn.textContent = "按下按键…";
+      btn.classList.add("waiting");
+      const capture = (ev) => {
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        if (ev.code === "Escape") {
+          overlayEl.removeEventListener("keydown", capture, true);
+          openKeybinds(back);
+          return;
+        }
+        setKeybind(action, ev.code);
+        overlayEl.removeEventListener("keydown", capture, true);
+        openKeybinds(back);
+      };
+      overlayEl.addEventListener("keydown", capture, true);
+    });
+  });
+  overlayEl.querySelector("#keybind-reset").addEventListener("click", () => { resetKeybinds(); openKeybinds(back); });
+  overlayEl.querySelector("#keybind-back").addEventListener("click", () => { if (back) back(); else showTitle(); });
 }
 
 function charEmoji(id) {
@@ -4284,8 +4665,8 @@ function openPause() {
     </div>
     <div class="big-actions">
       <button class="btn primary" id="resume">继续</button>
-      <button class="btn" id="inventory">道具栏 (I)</button>
-      <button class="btn" id="map">地图 (Tab)</button>
+      <button class="btn" id="inventory">道具栏 (${keyLabel(keybind("inventory"))})</button>
+      <button class="btn" id="map">地图 (${keyLabel(keybind("map"))})</button>
       <button class="btn" id="help">玩法</button>
     </div>
     <div class="screen-foot">
@@ -4298,9 +4679,10 @@ function openPause() {
   overlayEl.querySelector("#map").addEventListener("click", openMap);
   overlayEl.querySelector("#help").addEventListener("click", () => showHelp(openPause));
   overlayEl.querySelector("#restart").addEventListener("click", () => {
-    const ch = G.charId, seed = G.seedStr;
+    const ch = G.charId, difficulty = G.difficulty, locked = !!G.seedLocked;
+    const seed = locked ? G.seedStr : undefined;
     hideOverlay();
-    createRun(ch, { seed, difficulty: G.difficulty });
+    createRun(ch, { seed, difficulty, seedLocked: locked });
     G.floorTitle = 110;
   });
   overlayEl.querySelector("#title").addEventListener("click", showTitle);
@@ -4398,7 +4780,7 @@ function openMap() {
     for (let x = 0; x < 9; x++) {
       const r = floor.rooms.get(roomKey(x, y));
       if (!r) { cells.push(`<div class="map-cell" style="opacity:0"></div>`); continue; }
-      const known = floor.explored.has(r.key) || floor.mapReveal || (floor.specialReveal && ["treasure", "shop", "boss", "secret", "devil", "angel"].includes(r.type));
+      const known = floor.explored.has(r.key) || floor.mapReveal || (floor.specialReveal && ["treasure", "shop", "boss", "secret", "super_secret", "devil", "angel"].includes(r.type));
       if (!known) { cells.push(`<div class="map-cell"></div>`); continue; }
       const cur = r.key === G.room.key ? " cur" : "";
       const icon = ROOM_TYPES[r.type] && ROOM_TYPES[r.type].icon ? ROOM_TYPES[r.type].icon : "";
@@ -4418,7 +4800,7 @@ function openMap() {
     </div>
     <div class="map-wrap"><div class="map-grid" style="grid-template-columns:repeat(9,${cw}px);gap:4px">${cells.join("")}</div></div>
     <div class="map-legend">
-      <span>☠ Boss</span><span>★ 宝箱</span><span>$ 商店</span><span>? 隐藏</span><span>† 诅咒</span><span>♆ 恶魔</span><span>✧ 天使</span><span>金色数字 未拾取资源</span>
+      <span>☠ Boss</span><span>★ 宝箱</span><span>$ 商店</span><span>? 隐藏</span><span>! 超级隐藏</span><span>† 诅咒</span><span>♆ 恶魔</span><span>✧ 天使</span><span>金色数字 未拾取资源</span>
     </div>
     <div class="screen-foot"><button class="btn primary" id="map-close">返回游戏</button></div>
   </div>`;
@@ -4451,25 +4833,26 @@ function showHelp(back) {
     <div class="help-grid">
       <section class="panel help-block">
         <h3>目标与循环</h3>
-        <p>从地下室一路打到<b>大教堂</b>，击败最终 Boss「以撒」即可通关。每层清空房间、打开宝箱/商店、击败 Boss，踩入活板门进入下一层。</p>
+        <p>从地下室一路打到大教堂，击败本层最终 Boss 即可通关。每层有 3 个候选 Boss 随机出现；清空房间、打开宝箱/商店、踩入活板门进入下一层。</p>
         <p>红心是生命容器；魂心与黑心会先于红心被消耗。魂心可以超过生命上限，但无法通过红心回复补满。</p>
         <h3>战斗</h3>
         <p>WASD 移动，方向键或鼠标左键射击。眼泪具有伤害、射速、射程、弹速、体积与幸运等属性。所有状态（中毒、燃烧、冰冻、减速、魅惑、恐惧）都通过统一状态系统叠加。</p>
         <p>炸弹可炸开石头、便便、TNT，也能炸开隐藏门。主动道具清理房间后充能；卡牌/药丸只能携带一张。</p>
         <h3>房间</h3>
-        <p>宝箱房和商店需要钥匙；隐藏房的裂缝可以被炸弹炸开；诅咒房用半颗心开门；Boss 击败后可能出现恶魔房或天使房。</p>
+        <p>宝箱房和商店需要钥匙；每层必有一个隐藏房和一个超级隐藏房，可以用炸弹炸开裂缝；诅咒房用半颗心开门；Boss 击败后可能出现恶魔房或天使房。</p>
       </section>
       <aside class="panel help-block">
         <h3>按键</h3>
         <div class="help-keys">
-          <span><span class="kbd">W A S D</span></span><span>移动</span>
+          <span><span class="kbd">${keyLabel(keybind("up"))} ${keyLabel(keybind("left"))} ${keyLabel(keybind("down"))} ${keyLabel(keybind("right"))}</span></span><span>移动</span>
           <span><span class="kbd">方向键</span> / <span class="kbd">鼠标左键</span></span><span>瞄准与射击</span>
-          <span><span class="kbd">E</span></span><span>放置炸弹</span>
-          <span><span class="kbd">空格</span></span><span>使用主动道具</span>
-          <span><span class="kbd">Q</span></span><span>使用卡牌或药丸</span>
-          <span><span class="kbd">Tab</span></span><span>地图</span>
-          <span><span class="kbd">I</span></span><span>道具栏</span>
-          <span><span class="kbd">Esc</span></span><span>暂停</span>
+          <span><span class="kbd">${keyLabel(keybind("bomb"))}</span></span><span>放置炸弹</span>
+          <span><span class="kbd">${keyLabel(keybind("active"))}</span></span><span>使用主动道具</span>
+          <span><span class="kbd">${keyLabel(keybind("card"))}</span></span><span>使用卡牌或药丸</span>
+          <span><span class="kbd">${keyLabel(keybind("map"))}</span></span><span>地图</span>
+          <span><span class="kbd">${keyLabel(keybind("inventory"))}</span></span><span>道具栏</span>
+          <span><span class="kbd">${keyLabel(keybind("pause"))}</span></span><span>暂停</span>
+          <span><span class="kbd">长按 ${keyLabel(keybind("restart"))}</span></span><span>重开本局（有种子用种子，否则随机）</span>
           <span><span class="kbd">M</span></span><span>静音</span>
           <span><span class="kbd">~</span></span><span>开发者控制台（点击获取道具）</span>
         </div>
@@ -4553,10 +4936,30 @@ function triggerVictory() {
 /* =====================================================================
  * 22. 主循环
  * ===================================================================== */
+function updateRestartHold() {
+  if (!G || G.state !== "playing") return false;
+  const code = keybind("restart");
+  if (!code || !Keys[code]) { G.rHold = 0; G.restartLocked = false; return false; }
+  if (G.restartLocked) return false;
+  G.rHold = (G.rHold || 0) + 1;
+  if (G.rHold < 48) return false;
+  const ch = G.charId, difficulty = G.difficulty;
+  const locked = !!G.seedLocked;
+  const seed = locked ? G.seedStr : String(Math.floor(Math.random() * 100000000));
+  createRun(ch, { seed, difficulty, seedLocked: locked });
+  G.rHold = 0; G.restartLocked = true;
+  G.floorTitle = 105;
+  G.message = locked ? `种子 ${G.seedDisplay} · 重新开始` : "随机种子 · 重新开始";
+  G.messageTimer = 180;
+  Audio.boss();
+  return true;
+}
+
 function updateGame() {
   if (!G || G.state !== "playing") return;
   G.frame++;
   G.time += 1 / 60;
+  if (updateRestartHold()) return;
   if (G.floorTitle > 0) G.floorTitle--;
   if (G.messageTimer > 0) G.messageTimer--;
   if (G.victoryPending > 0) {
@@ -4600,11 +5003,11 @@ if (typeof window !== "undefined") {
   window.__ISAAC__ = {
     ITEMS, ITEM_ORDER, TRINKETS, TRINKET_ORDER, CARDS, CARD_ORDER, PILLS, PILL_ORDER,
     CHARACTERS, CHAPTERS, TRANSFORMS, ENEMY_TYPES, BOSS_DEFS, ROOM_LAYOUTS,
-    createRun, startRun, generateFloor, enterRoom, recalcStats, fireEvent, runEffects,
-    damageEnemy, spawnEnemy, spawnBoss, spawnPlayerTear, spawnPickup, damagePlayer: takeDamage,
+    createRun, startRun, generateFloor, enterRoom, recalcStats, fireEvent, runEffects, fireBrimstone,
+    poolItems, damageEnemy, spawnEnemy, spawnBoss, spawnPlayerTear, spawnPickup, damagePlayer: takeDamage,
     nextFloor, triggerVictory, addItem, addTrinket, tryPedestal, collectPickup, revealMap, reroll,
     openBombDoorNear, useConsumable, useActive, dropBomb, circleHitsSolid, tearHitsSolid, addConsumable,
-    roomLootCount, getState: () => G, Keys, Pressed,
+    roomLootCount, keybind, keyLabel, setKeybind, resetKeybinds, getState: () => G, Keys, Pressed,
     step: (n = 1) => { for (let i = 0; i < n; i++) updateGame(); },
     renderOnce: () => render(),
     setMenu: (c, d, s) => { menuState = { char: c || "isaac", difficulty: d || "normal", seed: s || "" }; },
