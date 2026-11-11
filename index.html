@@ -2527,36 +2527,38 @@ function buildBrimstonePath(b) {
   b.x = P.x; b.y = P.y;
   const step = 20;
   const count = Math.max(2, Math.min(120, Math.ceil(b.range / step)));
-  let angle = b.curveAngle != null ? b.curveAngle : b.angle;
+  // 每帧都从基础方向重新构建一条完整曲线。目标集合只在本帧内使用，
+  // 这样光束在整个持续期间都会弯曲追踪，而不是第一帧之后变成直线。
+  let angle = b.angle;
+  const seen = new Set();
   let x = b.x, y = b.y;
   b.path = [{ x, y }];
   for (let i = 0; i < count; i++) {
     if (b.homing > 0 && G.room.enemies.length) {
       let target = null, best = Math.min(1200, b.range || 1200);
       for (const e of G.room.enemies) {
-        if (e.dead || b.curveHit.has(e)) continue;
+        if (e.dead || seen.has(e)) continue;
         const d = dist(x, y, e.x, e.y);
         if (d < best) { best = d; target = e; }
       }
       if (!target) {
         for (const e of G.room.enemies) {
-          if (e.dead || b.curveHit.has(e)) continue;
+          if (e.dead || seen.has(e)) continue;
           const d = dist(x, y, e.x, e.y);
           if (d < best) { best = d; target = e; }
         }
       }
       if (target) {
-        angle = lerpAngle(angle, Math.atan2(target.y - y, target.x - x), 0.18);
+        angle = lerpAngle(angle, Math.atan2(target.y - y, target.x - x), 0.2);
         // 弯曲有上限，避免无限射程的激光绕圈跑出房间。
-        angle = b.angle + clamp(angleDiff(b.angle, angle), -1.05, 1.05);
-        if (dist(x, y, target.x, target.y) < 42) b.curveHit.add(target);
+        angle = b.angle + clamp(angleDiff(b.angle, angle), -1.2, 1.2);
+        if (dist(x, y, target.x, target.y) < 46) seen.add(target);
       }
     }
     x += Math.cos(angle) * step;
     y += Math.sin(angle) * step;
     b.path.push({ x, y });
   }
-  b.curveAngle = angle;
   b.length = count * step;
 }
 function laserWorldHitPath(path, width, damage) {
