@@ -675,7 +675,7 @@ I("moms_eye", "妈妈的眼睛", "Mom's Eye", "passive", 2, "treasure", "👁️
 I("spider_bite", "蜘蛛咬伤", "Spider Bite", "passive", 3, "treasure", "🕷️", "眼泪有 20% 几率减速敌人，击杀时可能生成蜘蛛。", { tags: ["slow", "spider"], tear: { slow: 0.2 }, procs: [{ on: "kill", chance: 0.2, effects: [{ kind: "spawnFriendly", what: "spider", count: 1 }] }] });
 I("common_cold", "普通感冒", "The Common Cold", "passive", 2, "treasure", "🤧", "眼泪有 15% 几率使敌人中毒。", { tags: ["poison"], tear: { poison: 0.15 } });
 I("lokis_horns", "洛基的角", "Loki's Horns", "passive", 3, "treasure", "😈", "射击时向四个方向各发射一颗眼泪。", { tags: ["tears", "multi"], tear: { crossshot: true } });
-I("tiny_planet", "小行星", "Tiny Planet", "passive", 3, "treasure", "🪐", "射程大幅提升；眼泪会围绕你旋转。与硫磺火兼容：硫磺火先绕角色一圈，再朝发射方向射出。", { tags: ["tears", "range"], mods: { range: 4.5 }, tear: { orbit: 0.045 } });
+I("tiny_planet", "小行星", "Tiny Planet", "passive", 3, "treasure", "🪐", "射程大幅提升；眼泪会围绕你旋转。与硫磺火兼容：硫磺火先绕角色一圈，再朝发射方向射出。", { tags: ["tears", "range"], mods: { range: 15 }, tear: { orbit: 0.045 } });
 I("continuum", "连续体", "Continuum", "passive", 3, "treasure", "🌌", "眼泪会穿过墙壁并从另一侧出现。", { tags: ["tears", "spectral"], tear: { wrap: true, spectral: true } });
 I("magnetic_tears", "磁力眼泪", "Magnetic Tears", "passive", 3, "treasure", "🧲", "眼泪会被敌人吸引，并吸取掉落物。", { tags: ["tears", "magnet"], tear: { homing: 0.035 }, flags: ["magnet"] });
 I("mutant_spider", "变异蜘蛛", "Mutant Spider", "passive", 4, "treasure", "🕷️", "一次发射 4 颗眼泪，但射速与单发伤害降低。", { tags: ["tears", "multi", "spider"], mods: { shots: 3, damageMult: 0.5, fireDelay: 4.5, shotSpread: 0.1 } });
@@ -1029,6 +1029,11 @@ for (const id of BOSS_POOL_EXTRA) {
   if (it && !it.pools.includes("boss")) it.pools.push("boss");
 }
 
+
+/* ---- 12_wiki_names.js ---- */
+/* 官方中文译名（按英文名匹配；数据来源：以撒中文百科/objects.js） */
+const WIKI_ITEM_NAMES = {"The Sad Onion":"悲伤洋葱","The Inner Eye":"内眼","Spoon Bender":"弯勺魔术","Cricket's Head":"柯吉猫的头","My Reflection":"我的镜像","Number One":"小号","Blood of the Martyr":"殉道者之血","Brother Bobby":"波比兄弟","Skatole":"粪臭素","Halo of Flies":"苍蝇光环","1up!":"1UP!","Magic Mushroom":"魔法蘑菇","The Virus":"病毒","Roid Rage":"过量类固醇","<3":"<3","Raw Liver":"生肝","Skeleton Key":"骷髅钥匙","A Dollar":"一美元","Boom!":"轰！","Transcendence":"超凡升天","The Compass":"指南针","Lunch":"午餐","Dinner":"正餐","Dessert":"甜点","Breakfast":"早餐","Rotten Meat":"烂肉","Wooden Spoon":"木头勺子","The Belt":"皮带","Mom's Underwear":"妈妈的内裤","Mom's Heels":"妈妈的高跟鞋","Mom's Lipstick":"妈妈的口红","Wire Coat Hanger":"铁丝衣架","The Bible":"圣经","The Book of Belial":"彼列之书","The Necronomicon":"死灵之书","The Poop":"大便","Mr. Boom":"炸弹先生","Tammy's Head":"塔米猫的头","Mom's Bra":"妈妈的胸罩","Kamikaze!":"神风！","Mom's Pad":"妈妈的卫生巾","Bob's Rotten Head":"鲍勃的烂头","Teleport!":"传送！","Yum Heart":"美味的心","Lucky Foot":"幸运脚","Doctor's Remote":"胎儿博士的遥控器","Cupid's Arrow":"丘比特之箭","Shoop da Whoop!":"嗖-哒-呜！","Steven":"史蒂文","Pentagram":"五芒星","Dr. Fetus":"胎儿博士","Magneto":"万磁王","Treasure Map":"藏宝图","Mom's Eye":"妈妈的眼睛","Lemon Mishap":"烦事柠檬","Distant Admiration":"仰慕之交","Book of Shadows":"影之书","The Ladder":"梯子","Charm of the Vampire":"吸血鬼之魅","The Battery":"蓄电池","Steam Sale":"Steam大促","Anarchist Cookbook":"无政府主义者食谱","The Hourglass":"沙漏","Sister Maggy":"玛姬姐妹","Technology":"科技","Chocolate Milk":"巧克力牛奶","Growth Hormones":"生长激素","Mini Mush":"小蘑菇","Rosary":"念珠","Cube of Meat":"肉块","A Quarter":"25美分","PHD":"药学博士证","X-Ray Vision":"X光透视","My Little Unicorn":"彩虹独角兽","Book of Revelations":"启示录","The Mark":"咒印","The Pact":"契约","Dead Cat":"嗝屁猫","Lord of the Pit":"深渊领主","The Nail":"钉子","We Need To Go Deeper!":"我们需要深入挖掘！","Deck of Cards":"卡牌盒","Monstro's Tooth":"萌死戳的牙","Loki's Horns":"洛基的角","Little Chubby":"小胖蛆","Spider Bite":"蜘蛛之咬","The Small Rock":"小石头","Spelunker Hat":"探窟帽","Super Bandage":"超级绷带","The Gamekid":"游戏掌机","Sack of Pennies":"硬币袋","Robo-Baby":"机器宝宝","Little C.H.A.D.":"查德宝宝","The Book of Sin":"七原罪之书","The Relic":"圣遗物","Little Gish":"吉什宝宝","Little Steven":"史蒂文宝宝","The Halo":"光环","Mom's Bottle of Pills":"妈妈的药瓶","The Common Cold":"普通感冒","The Parasite":"寄生虫","The D6":"六面骰","Mr. Mega":"大爆弹先生","The Pinking Shears":"锯齿剪","The Wafer":"圣饼","Money = Power":"金钱=力量","Mom's Contacts":"妈妈的美瞳","The Bean":"豆子","Guardian Angel":"守护天使","Demon Baby":"恶魔宝宝","Mom's Knife":"妈妈的菜刀","Ouija Board":"通灵板","9 Volt":"9伏特","Dead Bird":"死鸟","Brimstone":"硫磺火","Blood Bag":"血袋","Odd Mushroom (Thin)":"怪异蘑菇(小)","Odd Mushroom (Large)":"怪异蘑菇(大)","Whore of Babylon":"巴比伦大淫妇","Monster Manual":"怪物手册","Dead Sea Scrolls":"死海古卷","Bobby-Bomb":"波比炸弹","Razor Blade":"剃刀片","Forget Me Now":"遗忘药","Forever Alone":"孤独一生","Bucket of Lard":"桶装猪油","A Pony":"小黑马","Bomb Bag":"炸弹袋","A Lump of Coal":"煤块","Guppy's Paw":"嗝屁猫的爪子","Guppy's Tail":"嗝屁猫的尾巴","IV Bag":"献血袋","Best Friend":"最好的朋友","Remote Detonator":"起爆器","Stigmata":"圣痕","Mom's Purse":"妈妈的钱包","Bob's Curse":"鲍勃的诅咒","Pageant Boy":"盛装男孩","Scapular":"肩衣","Speed Ball":"混合麻药","Bum Friend":"乞丐朋友","Guppy's Head":"嗝屁猫的头","Prayer Card":"祈祷卡","Notched Axe":"残损铁镐","Infestation":"害虫横行","Ipecac":"吐根酊","Tough Love":"严厉的爱","The Mulligan":"虫群复击","Technology 2":"科技II","Mutant Spider":"变异蜘蛛","Chemical Peel":"化学剥皮法","The Peeper":"窥眼","Habit":"修女服","Bloody Lust":"嗜血","Crystal Ball":"水晶球","Spirit of the Night":"夜之幽魂","Crack the Sky":"撕裂苍穹","Ankh":"安卡十字","Celtic Cross":"凯尔特十字","Ghost Baby":"幽灵宝宝","The Candle":"蓝蜡烛","Cat-o-nine-tails":"九尾鞭","D20":"二十面骰","Harlequin Baby":"小丑宝宝","Epic Fetus":"史诗胎儿博士","Polyphemus":"巨人独眼","Daddy Longlegs":"长腿蛛父","Spider Butt":"蜘蛛屁股","Sacrificial Dagger":"献祭匕首","Mitre":"主教冠","Rainbow Baby":"彩虹宝宝","Dad's Key":"爸爸的钥匙","Stem Cells":"干细胞","Portable Slot":"便携式老虎机","Holy Water":"圣水","Fate":"宿命","The Black Bean":"黑豆","White Pony":"小白马","Sacred Heart":"圣心","Tooth Picks":"牙签","Holy Grail":"圣杯","Dead Dove":"死鸽","Blood Rights":"血之权利","Guppy's Hairball":"嗝屁猫的毛球","Abel":"亚伯","SMB Super Fan":"超级食肉男孩死忠粉","Pyro":"烟火盛宴","3 Dollar Bill":"3美元纸币","Telepathy for Dummies":"心灵感应傻瓜式教程","MEAT!":"生肉！","Magic 8 Ball":"魔力八号球","Mom's Coin Purse":"妈妈的零钱包","Squeezy":"挤压玩具","Jesus Juice":"耶稣果汁","Box":"盒子","Mom's Key":"妈妈的钥匙","Mom's Eyeshadow":"妈妈的眼影","Iron Bar":"铁块","Midas' Touch":"弥达斯之触","Humbleing Bundle":"慈善捆绑包","Fanny Pack":"挎包","Sharp Plug":"锋利插头","Guillotine":"断头台","Ball of Bandages":"绷带球","Champion Belt":"冠军腰带","Butt Bombs":"屁股炸弹","Gnawed Leaf":"狸猫树叶","Spiderbaby":"蜘蛛宝宝","Guppy's Collar":"嗝屁猫的项圈","Lost Contact":"丢失的隐形眼镜","Anemic":"贫血","Goat Head":"山羊头","Ceremonial Robes":"仪式法袍","Mom's Wig":"妈妈的假发","Placenta":"胎盘","Old Bandage":"旧绷带","Sad Bombs":"悲伤炸弹","Rubber Cement":"橡胶胶水","Anti-Gravity":"反重力","Pyromaniac":"纵火狂","Cricket's Body":"柯吉猫的身体","Gimpy":"兽性面具","Black Lotus":"黑莲花","Piggy Bank":"小猪存钱罐","Mom's Perfume":"妈妈的香水","Monstro's Lung":"萌死戳的肺","Abaddon":"亚巴顿","Ball of Tar":"焦油球","Stop Watch":"怀表","Tiny Planet":"小小星球","Infestation 2":"害虫横行II","E. Coli":"大肠杆菌","Death's Touch":"死神之触","Key Piece 1":"钥匙碎片1","Key Piece 2":"钥匙碎片2","Experimental Treatment":"实验性疗法","Contract from Below":"地狱契约","Infamy":"耻辱假面","Trinity Shield":"三位一体盾","Tech.5":"科技0.5","20/20":"完美视力","Blue Map":"蓝地图","BFFS!":"好朋友一辈子！","Hive Mind":"虫群之心","There's Options":"额外选择","Bogo Bombs":"炸弹买一送一","Starter Deck":"新手牌组","Little Baggy":"小药袋","Magic Scab":"魔法血痂","Blood Clot":"血块","Screw":"螺丝","Hot Bombs":"炙热炸弹","Fire Mind":"火焰意志","Missing No.":"编号丢失","Dark Matter":"暗物质","Black Candle":"黑蜡烛","Proptosis":"眼球突出","Missing Page 2":"遗失的书页2","Clear Rune":"透明符文","Smart Fly":"智能苍蝇","Dry Baby":"枯骨宝宝","Juicy Sack":"粘液卵囊","Robo-Baby 2.0":"机器宝宝2.0","Rotten Baby":"腐烂宝宝","Headless Baby":"无头宝宝","Leech":"水蛭","Mystery Sack":"神秘的袋子","BBF":"大美蝇","Bob's Brain":"鲍勃的脑浆子","Best Bud":"生死之交","Lil Brimstone":"硫磺火宝宝","Isaac's Heart":"以撒的心脏","Lil Haunt":"恶灵宝宝","Dark Bum":"黑暗乞丐","Big Fan":"大粉丝","Sissy Longlegs":"长腿蛛妹妹","Punching Bag":"受气包","How to Jump":"跳跃教程","D100":"一百面骰","D4":"四面骰","D10":"十面骰","Blank Card":"空白卡牌","Book of Secrets":"秘密之书","Box of Spiders":"蜘蛛盒","Red Candle":"红蜡烛","The Jar":"罐子","Flush!":"冲水！","Satanic Bible":"撒但圣经","Head of Krampus":"坎卜斯的头","Butter Bean":"棉豆","Magic Fingers":"魔术手指","Converter":"转换器","Pandora's Box":"潘多拉魔盒","Unicorn Stump":"独角兽的残角","Taurus":"金牛座","Aries":"白羊座","Cancer":"巨蟹座","Leo":"狮子座","Virgo":"室女座","Libra":"天秤座","Scorpio":"天蝎座","Sagittarius":"人马座","Capricorn":"摩羯座","Aquarius":"宝瓶座","Pisces":"双鱼座","Eve's Mascara":"夏娃的睫毛膏","Judas' Shadow":"犹大的影子","Maggy's Bow":"抹大拉的蝴蝶结","Holy Mantle":"神圣屏障","Thunder Thighs":"霹雳大腿","Strange Attractor":"怪异磁铁","Cursed Eye":"诅咒之眼","Mysterious Liquid":"神秘液体","Gemini":"双子座","Cain's Other Eye":"该隐的另一只眼","???'s Only Friend":"???唯一的朋友","Samson's Chains":"参孙的脚镣","Mongo Baby":"蒙戈宝宝","Isaac's Tears":"以撒的泪盆","Undefined":"未定义","Scissors":"剪刀","Breath of Life":"生命之息","The Polaroid":"全家福","The Negative":"底片","The Ludovico Technique":"鲁多维科科技","Soy Milk":"豆奶","Godhead":"神性","Lazarus' Rags":"拉撒路的绷带","The Mind":"思想","The Body":"肉体","The Soul":"灵魂","Dead Onion":"烂洋葱","Broken Watch":"损坏的怀表","The Boomerang":"回旋镖","Safety Pin":"安全别针","Caffeine Pill":"咖啡因片","Torn Photo":"撕碎的照片","Blue Cap":"蓝盖蘑菇","Latch Key":"弹簧锁钥匙","Match Book":"火柴盒","Synthoil":"合成油脂","A Snack":"零食","Diplopia":"复视","Placebo":"安慰剂","Wooden Nickel":"木制镍币","Toxic Shock":"毒性休克","Mega Bean":"超级豆子","Glass Cannon":"玻璃大炮","Bomber Boy":"炸弹人","Crack Jacks":"琥珀爆米花","Mom's Pearls":"妈妈的珍珠项链","Car Battery":"车载电池","Box of Friends":"朋友盒","The Wiz":"蠢巫帽","8 Inch Nails":"八寸钉","Incubus":"淫魔","Fate's Reward":"宿命的报答","Lil Chest":"小箱子","Sworn Protector":"宣誓守护者","Friend Zone":"浅交朋友","Lost Fly":"迷路苍蝇","Scatter Bombs":"分裂炸弹","Sticky Bombs":"粘性炸弹","Epiphora":"溢泪症","Continuum":"连续统","Mr. Dolly":"玩偶先生","Curse of the Tower":"塔之诅咒","Charged Baby":"充电宝宝","Dead Eye":"死亡之眼","Holy Light":"圣光","Host Hat":"寄居骷髅帽","Restock":"补货","Bursting Sack":"爆裂虫卵","No. 2":"大号","Pupula Duplex":"双瞳","Pay To Play":"充钱游戏","Eden's Blessing":"伊甸的祝福","Friendly Ball":"友好球","Tear Detonator":"眼泪引爆器","Lil Gurdy":"肉山宝宝","Bumbo":"乞丐宝","D12":"十二面骰","Censer":"香炉","Key Bum":"钥匙乞丐","Rune Bag":"符文袋","Seraphim":"撒拉弗","Betrayal":"背叛","Zodiac":"黄道十二宫","Serpent's Kiss":"蛇蝎之吻","Marked":"十字准星","Tech X":"科技X","Ventricle Razor":"心室手术刀","Tractor Beam":"牵引光束","God's Flesh":"神体蘑菇","Maw of the Void":"虚空之喉","Spear of Destiny":"命运之矛","Explosivo":"爆炸物","Chaos":"混沌","Spider Mod":"蜘蛛模组","Farting Baby":"放屁宝宝","GB Bug":"恶性漏洞","D8":"八面骰","Purity":"纯洁","Athame":"祭祀之刃","Empty Vessel":"空容器","Evil Eye":"邪恶之眼","Lusty Blood":"血嗜","Cambion Conception":"恶魔受胎","Immaculate Conception":"圣灵受胎","More Options":"更多选择","Crown Of Light":"光明之冠","Deep Pockets":"深口袋","Succubus":"魅魔","Fruit Cake":"水果蛋糕","Teleport 2.0":"传送2.0","Black Powder":"黑色粉末","Kidney Bean":"腰豆","Glowing Hourglass":"发光沙漏","Circle of Protection":"保护之环","Sack Head":"福袋头","Night Light":"小夜灯","Obsessed Fan":"狂热粉丝","Mine Crafter":"工矿炸药包","PJs":"睡衣","Head of the Keeper":"店主的头","Papa Fly":"狙击蝇老爹","Multidimensional Baby":"多维宝宝","Glitter Bombs":"闪光炸弹","My Shadow":"我的影子","Jar of Flies":"苍蝇罐","Lil Loki":"洛基宝宝","Milk!":"牛奶！","D7":"七面骰","Binky":"奶嘴","Mom's Box":"妈妈的盒子","Kidney Stone":"肾结石","Mega Blast":"超级喷射","Dark Prince's Crown":"黑王子之冠","Apple!":"苹果！","Lead Pencil":"铅笔","Dog Tooth":"狗牙","Dead Tooth":"烂牙","Linger Bean":"流连豆","Shard of Glass":"玻璃碎片","Metal Plate":"金属板","Eye of Greed":"贪婪的眼睛","Tarot Cloth":"塔罗牌桌布","Varicose Veins":"静脉曲张","Compound Fracture":"复杂性骨折","Polydactyly":"多指畸形","Dad's Lost Coin":"爸爸丢失的硬币","Midnight Snack":"夜宵","Cone Head":"蛋头","Belly Button":"肚脐","Sinus Infection":"鼻窦炎","Glaucoma":"青光眼","Parasitoid":"拟寄生物","Eye of Belial":"彼列之眼","Sulfuric Acid":"硫酸","Glyph of Balance":"平衡符号","Analog Stick":"模拟摇杆","Contagion":"传染病","Finger!":"手指！","Shade":"阴影","Depression":"抑郁症","Hushy":"死寂宝宝","Lil Monstro":"萌死戳宝宝","King Baby":"国王宝宝","Big Chubby":"大胖蛆","Broken Glass Cannon":"损坏的玻璃大炮","Plan C":"计划C","D1":"一面骰","Void":"虚空","Pause":"暂停","Smelter":"熔炉","Compost":"堆肥","Dataminer":"数据破解","Clicker":"遥控器","Mama Mega!":"妈咪炸弹！","Wait What?":"等等，啥？","Crooked Penny":"被掰弯的硬币","Dull Razor":"钝剃刀片","Potato Peeler":"土豆削皮刀","Metronome":"节拍器","D Infinity":"无限面骰","Eden's Soul":"伊甸的灵魂","Acid Baby":"毒瘾宝宝","YO LISTEN!":"嘿，听好！","Adrenaline":"肾上腺素","Jacob's Ladder":"雅各布天梯","Ghost Pepper":"断魂椒","Euthanasia":"安乐死","Camo Undies":"迷彩内裤","Duality":"二元性","Eucharist":"圣餐","Sack of Sacks":"袋中袋","Greed's Gullet":"贪婪的胃袋","Large Zit":"大青春痘","Little Horn":"小魔角","Brown Nugget":"棕色粪块","Poke Go":"宝可GO","Backstabber":"背刺","Sharp Straw":"尖头吸管","Mom's Razor":"妈妈的剃刀","Bloodshot Eye":"血丝眼","Delirious":"精神错乱","Angry Fly":"愤怒苍蝇","Black Hole":"黑洞","Bozo":"派对帽","Broken Modem":"损坏的调制解调器","Mystery Gift":"神秘礼物","Sprinkler":"洒水器","Fast Bombs":"快速炸弹","Buddy in a Box":"伙伴盲盒","Lil Delirium":"精神错乱宝宝","Jumper Cables":"跨接电缆","Coupon":"代金券","Telekinesis":"念力","Moving Box":"搬家盒","Technology Zero":"科技零","Leprosy":"麻风病","7 Seals":"七印","Mr. ME!":"自我先生！","Angelic Prism":"天使棱镜","Pop!":"噗！","Death's List":"死神名册","Haemolacria":"泪血症","Lachryphagy":"食泪症","Trisagion":"三圣颂","Schoolbag":"书包","Blanket":"毛毯","Sacrificial Altar":"祭坛","Lil Spewer":"呕吐虫宝宝","Marbles":"弹珠袋","Mystery Egg":"神秘的卵","Flat Stone":"扁石","Marrow":"骨髓","Slipped Rib":"滑肋骨","Hallowed Ground":"圣地大便","Pointy Rib":"尖肋骨","Book of the Dead":"亡者之书","Dad's Ring":"爸爸的戒指","Divorce Papers":"离婚协议书","Jaw Bone":"颌骨","Brittle Bones":"脆骨症","Broken Shovel":"铲子碎片","Mom's Shovel":"妈妈的铲子","Mucormycosis":"毛霉菌病","2Spooky":"恐怖如斯","Golden Razor":"金剃刀片","Sulfur":"炼金硫磺","Fortune Cookie":"幸运饼干","Eye Sore":"眼瘤","120 Volt":"220伏","It Hurts":"好疼","Almond Milk":"杏仁奶","Rock Bottom":"谷底石","Nancy Bombs":"魅彩炸弹","A Bar of Soap":"肥皂","Blood Puppy":"嗜血小宠","Dream Catcher":"捕梦网","Paschal Candle":"逾越节蜡烛","Divine Intervention":"神圣干预","Blood Oath":"血誓","Playdough Cookie":"黏土饼干","Orphan Socks":"孤儿的袜子","Eye of the Occult":"玄秘魔眼","Immaculate Heart":"无瑕圣心","Monstrance":"圣体匣","The Intruder":"侵体蜘蛛","Dirty Mind":"龌龊之心","Damocles":"达摩克里斯之剑","Free Lemonade":"免费柠檬水","Spirit Sword":"英灵剑","Red Key":"红钥匙","Psy Fly":"灵能苍蝇","Wavy Cap":"迷幻蘑菇","Rocket in a Jar":"罐中火箭","Book of Virtues":"美德之书","Alabaster Box":"白玉香膏盒","The Stairway":"天堂阶梯","Sol":"太阳","Luna":"月亮","Mercurius":"水星","Venus":"金星","Terra":"地球","Mars":"火星","Jupiter":"木星","Saturnus":"土星","Uranus":"天王星","Neptunus":"海王星","Pluto":"冥王星","Voodoo Head":"巫毒娃娃头","Eye Drops":"眼药水","Act of Contrition":"痛悔短祷","Member Card":"会员卡","Battery Pack":"电池组","Mom's Bracelet":"妈妈的手镯","The Scooper":"挖眼勺","Ocular Rift":"邪眼裂口","Boiled Baby":"脓液囊宝宝","Freezer Baby":"冰冻宝宝","Eternal D6":"永恒六面骰","Bird Cage":"鸟肥笼","Larynx":"声带","Lost Soul":"迷失游魂","Blood Bombs":"鲜血炸弹","Lil Dumpy":"屁球宝宝","Bird's Eye":"鸟眼椒","Lodestone":"磁石","Rotten Tomato":"烂番茄","Birthright":"长子名分","Red Stew":"红豆汤","Genesis":"创世记","Sharp Key":"尖头钥匙","Booster Pack":"扩展包","Mega Mush":"超级蘑菇","Knife Piece 1":"菜刀碎片1","Knife Piece 2":"菜刀碎片2","Death Certificate":"死亡证明","Bot Fly":"机器苍蝇","Meat Cleaver":"切肉刀","Evil Charm":"邪眼护符","Dogma":"教条","Purgatory":"炼狱恶鬼","Stitches":"织布魔偶","R Key":"R键","Knockout Drops":"强力安眠药","Eraser":"橡皮擦","Yuck Heart":"难吃的心","Urn of Souls":"灵魂之瓮","Akeldama":"血田","Magic Skin":"玄奇驴皮","Revelation":"终末天启","Consolation Prize":"安慰奖","Tinytoma":"小畸胎瘤","Brimstone Bombs":"硫磺火炸弹","4.5 Volt":"4.5伏特","Fruity Plum":"甜甜糖梅宝","Plum Flute":"糖梅溜溜笛","Star of Bethlehem":"伯列恒之星","Cube Baby":"冰块宝宝","Vade Retro":"驱魔护符","False PHD":"伪造药学博士证","Spin to Win":"幸运转盘","Vasculitis":"血管炎","Giant Cell":"巨细胞","Tropicamide":"托吡卡胺","Card Reading":"牌意解读","Quints":"五胞胎","Tooth and Nail":"肉中刺","Binge Eater":"大胃王","Guppy's Eye":"嗝屁猫的眼睛","Strawman":"稻草人","Dad's Note":"爸爸的便条","Sausage":"腊肠","Options?":"选择？","Candy Heart":"糖心","A Pound of Flesh":"一磅肉","Redemption":"赎罪","Spirit Shackles":"灵魂枷锁","Cracked Orb":"碎裂的宝珠","Empty Heart":"空虚之心","Astral Projection":"灵魂出窍","C Section":"剖腹产","Lil Abaddon":"亚巴顿宝宝","Montezuma's Revenge":"水土不服症","Lil Portal":"黑洞宝宝","Worm Friend":"触手朋友","Bone Spurs":"骨刺","Hungry Soul":"饥饿幽魂","Jar of Wisps":"魂火罐","Soul Locket":"灵魂吊坠","Friend Finder":"寻友护符","Inner Child":"内在孩童","Glitched Crown":"错误王冠","Belly Jelly":"肚肚软糖","Sacred Orb":"十字圣球","Sanguine Bond":"血色羁绊","The Swarm":"虫群","Heartbreak":"心碎","Bloody Gust":"嗜血腥风","Salvation":"救恩","Vanishing Twin":"消失的胞胎","Twisted Pair":"作孽双子","Azazel's Rage":"阿撒泻勒之怒","Echo Chamber":"回声室","Isaac's Tomb":"以撒的坟墓","Vengeful Spirit":"复仇之魂","Esau Jr.":"小以扫","Berserk!":"狂怒！","Dark Arts":"暗仪刺刀","Abyss":"无底坑","Supper":"晚餐","Stapler":"订书机","Suplex!":"背摔！","Bag of Crafting":"合成宝袋","Flip":"生死逆转","Lemegeton":"所罗门魔典","Sumptorium":"圣血吸管","Recall":"召回","Hold":"保留","Keeper's Sack":"店主的胯袋","Keeper's Kin":"店主的亲友","Keeper's Box":"店主的盒子","Everything Jar":"百宝罐","TMTRAINER":"错误技","Anima Sola":"孤魂铁索","Spindown Dice":"计数二十面骰","Hypercoagulation":"高凝血","IBS":"大肠激躁症","Hemoptysis":"咯血症","Ghost Bombs":"幽灵炸弹","Gello":"格罗","Decap Attack":"飞头攻击","Glass Eye":"玻璃眼","Stye":"麦粒肿","Mom's Ring":"妈妈的戒指"};
+for (const it of ITEM_ORDER) { const n = WIKI_ITEM_NAMES[it.en]; if (n) it.name = n; }
 
 /* ---- 20_engine.js ---- */
 
@@ -1494,7 +1499,7 @@ function createRun(charId, opts = {}) {
   const P = {
     charId: char.id, char, x: ROOM_CENTER_X, y: ROOM_CENTER_Y, vx: 0, vy: 0, r: 16,
     red: char.hearts, maxRed: char.hearts, soul: char.soul, black: char.black,
-    coins: 0, bombs: 2, keys: 2, items: [], active: null, trinket: null, consumable: null,
+    coins: 0, bombs: 0, keys: 0, items: [], active: null, trinket: null, consumable: null,
     permaMods: [], permaStacks: {}, tempMods: [], tempFlags: [], tempTears: [],
     extraLives: 0, dead: false, invuln: 0, invulnMax: 60, shieldHits: 0, shieldTimer: 0,
     aim: 0, fireCd: 0, walking: 0, anim: 0, tearsFired: 0, contactBuff: null, tempOrbitals: [],
@@ -1720,14 +1725,16 @@ function generateFloor(index) {
     }
   }
   const degree = (r) => Object.keys(r.doors).length;
-  const distMap = new Map(), queue = [start];
-  distMap.set(start.key, 0);
+  const distMap = new Map(), parent = new Map(), queue = [start];
+  distMap.set(start.key, 0); parent.set(start.key, null);
   while (queue.length) {
     const cur = queue.shift();
     for (const d of DIR_ORDER) {
       const nb = cur.doors[d] && rooms.get(cur.doors[d].to);
       if (!nb || distMap.has(nb.key)) continue;
-      distMap.set(nb.key, distMap.get(cur.key) + 1); queue.push(nb);
+      distMap.set(nb.key, distMap.get(cur.key) + 1);
+      parent.set(nb.key, cur.key);
+      queue.push(nb);
     }
   }
   const candidates = [...rooms.values()].filter((r) => r !== start);
@@ -1735,24 +1742,26 @@ function generateFloor(index) {
   const deadEnds = candidates.filter((r) => degree(r) === 1);
   const boss = (deadEnds.length ? deadEnds : candidates)[0];
   boss.type = "boss";
-  const freeEnds = shuffle(deadEnds.filter((r) => r !== boss && r !== start));
+  const critical = new Set();
+  for (let cur = boss; cur && cur !== start; cur = rooms.get(parent.get(cur.key))) critical.add(cur.key);
+  const freeEnds = shuffle(deadEnds.filter((r) => r !== boss && r !== start && !critical.has(r.key)));
   const assign = (type) => { const r = freeEnds.shift(); if (r) { r.type = type; return r; } return null; };
   assign("treasure"); assign("shop");
   // 每层保证一个隐藏房和一个超级隐藏房；若死路不足，补出额外的死路房间。
   ensureDeadEnds(rooms, start, boss, 2);
-  const secretEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && r.type === "normal" && degree(r) === 1));
+  const secretEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && !critical.has(r.key) && r.type === "normal" && degree(r) === 1));
   if (secretEnds[0]) secretEnds[0].type = "secret";
   if (secretEnds[1]) secretEnds[1].type = "super_secret";
-  // 若极端情况下仍没有两个死路，则从普通房间中保底指定，确保每层两类房都存在。
+  // 保底也只从非必经路房间中选，避免隐藏房堵住起点到 Boss 的路线。
   if (![...rooms.values()].some((r) => r.type === "secret")) {
-    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss);
+    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss && !critical.has(x.key));
     if (r) r.type = "secret";
   }
   if (![...rooms.values()].some((r) => r.type === "super_secret")) {
-    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss);
+    const r = [...rooms.values()].find((x) => x.type === "normal" && x !== start && x !== boss && !critical.has(x.key));
     if (r) r.type = "super_secret";
   }
-  const optionalEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && r.type === "normal" && degree(r) === 1));
+  const optionalEnds = shuffle([...rooms.values()].filter((r) => r !== start && r !== boss && !critical.has(r.key) && r.type === "normal" && degree(r) === 1));
   const assignOptional = (type) => { const r = optionalEnds.shift(); if (r) { r.type = type; return r; } return null; };
   if (index >= 1 && chance(0.5)) assignOptional("curse");
   if (chance(0.45)) assignOptional("library");
@@ -2009,6 +2018,8 @@ function tryDoor(dir) {
   const target = G.floor.rooms.get(door.to);
   if (!target) return;
   let lock = ROOM_TYPES[target.type] && ROOM_TYPES[target.type].lock;
+  // 第一层的宝箱房和商店不需要钥匙。
+  if (G.floorIndex === 0 && (target.type === "treasure" || target.type === "shop")) lock = null;
   if (target.type === "shop" && G.player.trinket === "store_key") lock = null;
   const unlocked = room.unlocked[dir];
   if (lock && !unlocked) {
@@ -2200,7 +2211,7 @@ function spawnPlayerTear(x, y, angle, opts = {}) {
     [rainbow || "rainbow_none"]: rainbow ? 0.18 : 0,
     color: opts.color || t.color || "#e7dfca", hitSet: new Set(), dead: false,
     owner: opts.owner || "player", friendly: true, phase: rng() * TAU, orbit: t.orbit || false,
-    orbitAngle: angle, damageSource: opts.source || "tear", bornFrame: G.frame,
+    orbitAngle: angle, orbitTurns: 0, damageSource: opts.source || "tear", bornFrame: G.frame,
     explosiveRadius: opts.explosiveRadius || 50, big: !!opts.big, returned: false,
   };
   G.tears.push(tear);
@@ -2228,13 +2239,28 @@ function spawnEnemyShot(x, y, angle, speed, opts = {}) {
   });
 }
 
+function randomRoomPosition(room) {
+  for (let i = 0; i < 60; i++) {
+    const tx = randInt(1, ROOM_W - 2), ty = randInt(1, ROOM_H - 2);
+    if (!room.solids[ty][tx] && !room.pits[ty][tx]) return { x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE };
+  }
+  return { x: ROOM_CENTER_X, y: ROOM_CENTER_Y };
+}
+function rollCoinType() {
+  const r = rng();
+  if (r < 0.035) return "goldcoin";
+  if (r < 0.10) return "coin10";
+  if (r < 0.28) return "coin5";
+  return "coin";
+}
 function spawnPickup(type, x, y, opts = {}) {
   const room = opts.room || G.room;
   if (!room) return null;
+  const coinValue = type === "coin5" ? 5 : type === "coin10" ? 10 : 1;
   const p = {
     type, x: clamp(x, 24, ARENA_W - 24), y: clamp(y, 24, ARENA_H - 24), vx: 0, vy: 0, r: 13,
     bob: rng() * TAU, price: typeof opts.price === "number" ? { coins: opts.price } : (opts.price || null), trinketId: opts.trinketId || null,
-    consumableId: opts.consumableId || null, dead: false, value: opts.value || 1, cool: 0,
+    consumableId: opts.consumableId || null, dead: false, value: opts.value != null ? opts.value : coinValue, cool: 0,
     dropCd: opts.dropCd || 0,
   };
   if (type === "card") p.consumableId = p.consumableId || pick(CARD_ORDER).id;
@@ -2245,7 +2271,7 @@ function spawnPickup(type, x, y, opts = {}) {
 function spawnRandomPickup(x, y, room) {
   if (chance(0.08)) return spawnPickup(chance(0.5) ? "card" : "pill", x, y, { room: room || G.room });
   if (chance(0.03)) return spawnPickup("trinket", x, y, { room: room || G.room });
-  return spawnPickup(pick(["coin", "coin", "coin", "heart", "bomb", "key", "soul"]), x, y, { room: room || G.room });
+  return spawnPickup(pick(["coin", "coin", "coin", "coin5", "coin10", "goldcoin", "heart", "bomb", "key", "soul"]), x, y, { room: room || G.room });
 }
 function spawnPedestal(x, y, itemId, opts = {}) {
   const room = opts.room || G.room;
@@ -2351,7 +2377,8 @@ function killEnemy(e, opts = {}) {
   fireEvent("kill", { enemy: e });
   if (!e.boss) {
     if (chance(0.1)) spawnRandomPickup(e.x, e.y);
-    else if (chance(0.18)) spawnPickup(pick(["coin", "coin", "bomb", "key"]), e.x, e.y);
+    else if (chance(0.34)) spawnPickup(rollCoinType(), e.x, e.y);
+    else if (chance(0.06)) spawnPickup(pick(["bomb", "key"]), e.x, e.y);
     if (e.kind === "mulligan" && chance(0.4)) spawnEnemy("fly", e.x, e.y);
   }
   checkRoomClear();
@@ -2448,7 +2475,7 @@ function extinguishFire(h) {
   room.hazards.splice(idx, 1);
   spawnParticles(h.x, h.y, 14, "#d9c9b1", 2, 26);
   spawnParticles(h.x, h.y, 6, "#cf6b43", 1.4, 18);
-  if (chance(0.1)) spawnPickup("coin", h.x, h.y);
+  if (chance(0.18)) spawnPickup(rollCoinType(), h.x, h.y);
 }
 function updateHazards() {
   for (const h of G.room.hazards) {
@@ -2470,8 +2497,8 @@ function destroyObstacle(o) {
   o.dead = true; const room = G.room; o.hp = 0;
   room.solids[o.ty][o.tx] = 0; room.pits[o.ty][o.tx] = 0;
   spawnParticles(o.x, o.y, 10, o.type === "poop" ? "#7c5c3e" : "#8e8272", 2, 22);
-  if (o.type === "poop") { fireEvent("poopBreak", { x: o.x, y: o.y }); if (chance(0.16)) spawnPickup("coin", o.x, o.y); }
-  else { fireEvent("rockBreak", { x: o.x, y: o.y }); if (chance(0.08)) spawnPickup(pick(["coin", "bomb", "key", "heart"]), o.x, o.y); }
+  if (o.type === "poop") { fireEvent("poopBreak", { x: o.x, y: o.y }); if (chance(0.28)) spawnPickup(rollCoinType(), o.x, o.y); }
+  else { fireEvent("rockBreak", { x: o.x, y: o.y }); if (chance(0.18)) spawnPickup(pick([rollCoinType(), "bomb", "key", "heart"]), o.x, o.y); }
   updateRoomSolidity(room);
 }
 
@@ -2701,10 +2728,26 @@ function buildBrimstonePath(b) {
       const a = base + (i / circle) * TAU;
       b.path.push({ x: P.x + Math.cos(a) * radius, y: P.y + Math.sin(a) * radius });
     }
-    const end = b.path[b.path.length - 1];
+    const end = { ...b.path[b.path.length - 1] };
     const forward = Math.max(0, b.range - TAU * radius) / step;
+    let fangle = base;
+    const seen = new Set();
     for (let i = 0; i < Math.min(120, Math.ceil(forward)); i++) {
-      b.path.push({ x: end.x + Math.cos(base) * step * (i + 1), y: end.y + Math.sin(base) * step * (i + 1) });
+      if (b.homing > 0 && G.room.enemies.length) {
+        let target = null, best = 1200;
+        for (const e of G.room.enemies) {
+          if (e.dead || seen.has(e)) continue;
+          const d = dist(end.x, end.y, e.x, e.y);
+          if (d < best) { best = d; target = e; }
+        }
+        if (target) {
+          fangle = lerpAngle(fangle, Math.atan2(target.y - end.y, target.x - end.x), 0.2);
+          if (dist(end.x, end.y, target.x, target.y) < 46) seen.add(target);
+        }
+      }
+      end.x += Math.cos(fangle) * step;
+      end.y += Math.sin(fangle) * step;
+      b.path.push({ x: end.x, y: end.y });
     }
     b.length = b.path.length * step;
     return;
@@ -2733,8 +2776,6 @@ function buildBrimstonePath(b) {
       }
       if (target) {
         angle = lerpAngle(angle, Math.atan2(target.y - y, target.x - x), 0.2);
-        // 弯曲有上限，避免无限射程的激光绕圈跑出房间。
-        angle = b.angle + clamp(angleDiff(b.angle, angle), -1.2, 1.2);
         if (dist(x, y, target.x, target.y) < 46) seen.add(target);
       }
     }
@@ -2879,10 +2920,20 @@ function collectNearby() {
 function collectPickup(p) {
   if (p.dead) return;
   p.dead = true; Audio.pickup();
-  if (p.type === "coin") {
+  if (["coin", "coin5", "coin10", "goldcoin"].includes(p.type)) {
     giveResource("coin", p.value || 1);
     if (G.player.flags.has("double_pickups") && chance(0.25)) giveResource("coin", 1);
     fireEvent("pickup", { pickup: "coin" });
+    if (p.type === "goldcoin") {
+      // 金金币：每次拾取后传送到房间随机位置，20% 概率消失。
+      p.dead = false;
+      if (chance(0.2)) p.dead = true;
+      else {
+        const pos = randomRoomPosition(G.room);
+        p.x = pos.x; p.y = pos.y; p.dropCd = 30; p.bob = rng() * TAU;
+        spawnParticles(p.x, p.y, 12, "#f4d35e", 1.8, 24);
+      }
+    }
   }
   else if (p.type === "heart") { healPlayer(2); fireEvent("pickup", { pickup: "heart" }); }
   else if (p.type === "soul") { addSoul(2); fireEvent("pickup", { pickup: "soul" }); }
@@ -2965,9 +3016,27 @@ function updateTears() {
       }
     }
     if (t.orbit && !t.returning) {
-      t.orbitAngle += 0.045;
+      const stepA = t.homing ? 0.09 : 0.045;
+      t.orbitAngle += stepA;
+      t.orbitTurns += stepA;
       t.x = G.player.x + Math.cos(t.orbitAngle) * 90;
       t.y = G.player.y + Math.sin(t.orbitAngle) * 90;
+      // 追踪 + 小行星：先绕一圈，然后脱离轨道追踪敌人；
+      // 否则轨道会一直覆盖位置，导致追踪完全失效。
+      if (t.homing && t.orbitTurns >= TAU) {
+        let near = null, nd = 900;
+        for (const e of room.enemies) {
+          if (e.dead) continue;
+          const d = dist(t.x, t.y, e.x, e.y);
+          if (d < nd) { nd = d; near = e; }
+        }
+        if (near) {
+          t.orbit = false;
+          const a = Math.atan2(near.y - t.y, near.x - t.x);
+          const sp = Math.max(5, Math.hypot(t.vx, t.vy) || 6);
+          t.angle = a; t.vx = Math.cos(a) * sp; t.vy = Math.sin(a) * sp;
+        }
+      }
     } else { t.x += t.vx; t.y += t.vy; }
     if (t.wavy) {
       const perp = t.angle + Math.PI / 2;
@@ -3739,14 +3808,14 @@ function drawDoors(room) {
     const door = room.doors[d]; if (!door) continue;
     const target = G.floor.rooms.get(door.to); if (!target) continue;
     const [x, y, w, h] = positions[d];
-    if (target.type === "secret" && !room.unlocked[d]) {
+    if ((target.type === "secret" || target.type === "super_secret") && !room.unlocked[d]) {
       ctx.fillStyle = "#302028"; ctx.fillRect(x - w / 2, y - h / 2, w, h);
       ctx.strokeStyle = "#8b5b66"; ctx.setLineDash([6, 4]); ctx.strokeRect(x - w / 2, y - h / 2, w, h); ctx.setLineDash([]);
       ctx.fillStyle = "#c9a3a0"; ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("⌁", x, y + 6); continue;
     }
     let color = "#3b2a2e";
     if (target.type === "boss") color = "#8c3e35"; else if (target.type === "treasure") color = "#a8853c";
-    else if (target.type === "shop") color = "#5d8e5a"; else if (target.type === "secret") color = "#5d4868";
+    else if (target.type === "shop") color = "#5d8e5a"; else if (target.type === "secret" || target.type === "super_secret") color = "#5d4868";
     else if (target.type === "devil") color = "#a52f35"; else if (target.type === "angel") color = "#b9b98d";
     ctx.fillStyle = "#160d11"; ctx.fillRect(x - w / 2, y - h / 2, w, h);
     ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(x - w / 2, y - h / 2, w, h);
@@ -3774,7 +3843,14 @@ function drawPedestal(p) {
 function drawPickup(p) {
   const bob = Math.sin(p.bob) * 2;
   ctx.save(); ctx.shadowColor = "rgba(240,210,140,.3)"; ctx.shadowBlur = 8;
-  if (p.type === "coin") { ctx.fillStyle = "#d9b84a"; ctx.beginPath(); ctx.arc(p.x, p.y + bob, 10, 0, TAU); ctx.fill(); ctx.strokeStyle = "#f7dd8c"; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = "#8c6c28"; ctx.font = "bold 9px Consolas"; ctx.textAlign = "center"; ctx.fillText("¢", p.x, p.y + 3 + bob); }
+  if (["coin", "coin5", "coin10", "goldcoin"].includes(p.type)) {
+    const big = p.type === "coin10" ? 13 : p.type === "coin5" ? 11 : p.type === "goldcoin" ? 12 : 10;
+    ctx.fillStyle = p.type === "goldcoin" ? "#f4cf4f" : "#d9b84a";
+    ctx.beginPath(); ctx.arc(p.x, p.y + bob, big, 0, TAU); ctx.fill();
+    ctx.strokeStyle = p.type === "goldcoin" ? "#fff2a8" : "#f7dd8c"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#8c6c28"; ctx.font = `bold ${p.type === "coin10" ? 8 : 9}px Consolas`; ctx.textAlign = "center";
+    ctx.fillText(p.type === "coin5" ? "5" : p.type === "coin10" ? "10" : p.type === "goldcoin" ? "G" : "¢", p.x, p.y + 3 + bob);
+  }
   else if (["heart", "soul", "black"].includes(p.type)) drawHeartShape(p.x, p.y - 7 + bob, 22, p.type === "heart" ? "#c84b55" : p.type === "soul" ? "#8acade" : "#9b7ac9", "#372027");
   else if (p.type === "bomb") { ctx.fillStyle = "#3a302d"; ctx.beginPath(); ctx.arc(p.x, p.y + bob, 11, 0, TAU); ctx.fill(); ctx.strokeStyle = "#c8a66b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x + 7, p.y - 7 + bob); ctx.quadraticCurveTo(p.x + 14, p.y - 16 + bob, p.x + 17, p.y - 8 + bob); ctx.stroke(); }
   else if (p.type === "key") { ctx.strokeStyle = "#d8be76"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x - 5, p.y + bob, 6, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y + bob); ctx.lineTo(p.x + 12, p.y + bob); ctx.lineTo(p.x + 12, p.y + 6 + bob); ctx.stroke(); }
@@ -5004,7 +5080,7 @@ if (typeof window !== "undefined") {
     ITEMS, ITEM_ORDER, TRINKETS, TRINKET_ORDER, CARDS, CARD_ORDER, PILLS, PILL_ORDER,
     CHARACTERS, CHAPTERS, TRANSFORMS, ENEMY_TYPES, BOSS_DEFS, ROOM_LAYOUTS,
     createRun, startRun, generateFloor, enterRoom, recalcStats, fireEvent, runEffects, fireBrimstone,
-    poolItems, damageEnemy, spawnEnemy, spawnBoss, spawnPlayerTear, spawnPickup, damagePlayer: takeDamage,
+    poolItems, collectPickup, tryDoor, damageEnemy, spawnEnemy, spawnBoss, spawnPlayerTear, spawnPickup, damagePlayer: takeDamage,
     nextFloor, triggerVictory, addItem, addTrinket, tryPedestal, collectPickup, revealMap, reroll,
     openBombDoorNear, useConsumable, useActive, dropBomb, circleHitsSolid, tearHitsSolid, addConsumable,
     roomLootCount, keybind, keyLabel, setKeybind, resetKeybinds, getState: () => G, Keys, Pressed,
