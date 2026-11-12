@@ -4162,10 +4162,12 @@ function drawPlayer() {
   const dx = Math.cos(P.aim), dy = Math.sin(P.aim);
   const vertical = Math.abs(dy) >= Math.abs(dx);
   const headIdx = vertical ? (dy > 0 ? 0 : 3) : 1;
+  const walkFrame = Math.floor(P.walking * 2) % 2;
+  const bodyIdx = vertical ? (walkFrame ? 1 : 0) : (dx > 0 ? 2 : 3);
   const himg = set ? assetImage(set.heads[headIdx]) : null;
-  const bimg = set ? assetImage(set.bodies[0]) : null;
+  const bimg = set ? assetImage(set.bodies[bodyIdx]) : null;
   if (himg && himg.complete && himg.naturalWidth && bimg && bimg.complete && bimg.naturalWidth) {
-    ctx.drawImage(bimg, -20, -12, 40, 40);
+    ctx.drawImage(bimg, -20, -12 + walkFrame * 1.5, 40, 40);
     if (!vertical && dx < 0) {
       ctx.save(); ctx.scale(-1, 1);
       ctx.drawImage(himg, -20, -24, 40, 40);
