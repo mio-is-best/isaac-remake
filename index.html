@@ -4155,13 +4155,21 @@ function drawPlayer() {
   ctx.save(); ctx.translate(P.x, P.y + bob);
   ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); ctx.ellipse(0, 15, 14, 6, 0, 0, TAU); ctx.fill();
   const dxa = Math.cos(P.aim), dya = Math.sin(P.aim);
-  const headIdx = Math.abs(dya) >= Math.abs(dxa) ? (dya > 0 ? 0 : 3) : (dxa > 0 ? 1 : 2);
+  const vertical = Math.abs(dya) >= Math.abs(dxa);
+  const headIdx = vertical ? (dya > 0 ? 0 : 3) : 1;
+  const mirrorHead = !vertical && dxa < 0;
   const set = CHAR_SHEETS[P.charId] || CHAR_SHEETS.isaac;
   const bimg = set ? assetImage(set.bodies[Math.floor(P.walking * 1.5) % set.bodies.length]) : null;
   const himg = set ? assetImage(set.heads[headIdx]) : null;
   if (bimg && bimg.complete && bimg.naturalWidth && himg && himg.complete && himg.naturalWidth) {
-    ctx.drawImage(bimg, -20, -20, 40, 40);
-    ctx.drawImage(himg, -20, -20, 40, 40);
+    ctx.drawImage(bimg, -20, -15, 40, 40);
+    if (mirrorHead) {
+      ctx.save(); ctx.scale(-1, 1);
+      ctx.drawImage(himg, -20, -20, 40, 40);
+      ctx.restore();
+    } else {
+      ctx.drawImage(himg, -20, -20, 40, 40);
+    }
   } else {
     ctx.fillStyle = P.char.color; ctx.beginPath(); ctx.ellipse(0, 6, 12, 13, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = "#d9c6ae"; ctx.beginPath(); ctx.arc(0, -8, 12, 0, TAU); ctx.fill();
