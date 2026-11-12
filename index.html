@@ -696,7 +696,7 @@ I("parasite", "寄生虫", "The Parasite", "passive", 3, "treasure", "🪱", "�
 I("holy_light", "圣光", "Holy Light", "passive", 3, "angel", "🌟", "命中时有几率降下圣光爆炸。", { tags: ["angel", "light"], tear: { crit: 0.2 }, procs: [{ on: "hit", chance: 0.2, effects: [{ kind: "explode", at: "enemy", radius: 56, damage: 18, color: "#fff0ae" }] }] });
 I("godhead", "神格", "Godhead", "passive", 4, "angel", "👑", "眼泪获得光环，持续伤害附近敌人。", { tags: ["angel", "aura"], mods: { damageMult: 1.2, tearSize: 0.2 }, aura: { radius: 58, damage: 3.5, every: 18 } });
 I("holy_mantle", "圣披风", "Holy Mantle", "passive", 4, "angel", "🛡️", "每进入一个新房间获得一次伤害免疫。", { tags: ["angel", "shield"], procs: [{ on: "enterRoom", chance: 1, effects: [{ kind: "shield", hits: 1 }] }] });
-I("sacred_heart", "圣心", "Sacred Heart", "passive", 4, "angel", "❤️‍🔥", "伤害倍率大幅提升，眼泪获得追踪。", { tags: ["angel", "damage", "homing"], mods: { damageMult: 2.3, fireDelay: 2.5 }, tear: { homing: 0.11, color: "#ffb4b4" } });
+I("sacred_heart", "圣心", "Sacred Heart", "passive", 4, "angel", "❤️‍🔥", "伤害倍率大幅提升，眼泪变为白色、更大并获得追踪。", { tags: ["angel", "damage", "homing"], mods: { damageMult: 2.3, fireDelay: 2.5 }, tear: { homing: 0.11, color: "#ffffff", sizeMult: 1.4 } });
 I("dead_dove", "死鸽", "Dead Dove", "passive", 3, "angel", "🕊️", "获得飞行，射程提升。", { tags: ["angel", "fly"], flags: ["flying"], mods: { range: 1 } });
 I("the_halo", "光环", "The Halo", "passive", 3, "angel", "😇", "伤害、射速、移速、射程、幸运全面提升，生命上限 +1。", { tags: ["angel", "all"], hearts: 1, mods: { damage: 0.3, fireDelay: -1, speed: 0.2, range: 0.5, luck: 0.5 } });
 I("rosary", "念珠", "Rosary", "passive", 3, "angel", "📿", "生命上限 +1，获得 3 颗魂心。", { tags: ["angel", "health"], hearts: 1, pickupEffects: [{ kind: "soul", amount: 6 }] });
@@ -1129,6 +1129,7 @@ function recalcStats() {
       for (const k in source.tear) {
         const v = source.tear[k];
         if (typeof v === "boolean") tear[k] = tear[k] || v;
+        else if (typeof v === "string") tear[k] = v;
         else if (Number.isFinite(v)) {
           if (k === "sizeMult" || k === "damageMult") tear[k] = (tear[k] || 1) * v;
           else tear[k] = (tear[k] || 0) + v;
@@ -4461,7 +4462,7 @@ function drawHud() {
   ctx.fillStyle = "#e8d6ba"; ctx.font = "bold 14px Consolas"; ctx.fillText(String(P.keys), 166, 81);
   const chapter = CHAPTERS[G.floorIndex];
   ctx.textAlign = "center"; ctx.fillStyle = "#a99484"; ctx.font = "10px Consolas";
-  ctx.fillText("FLOOR " + (G.floorIndex + 1) + " / " + CHAPTERS.length, VIEW_W / 2, 28);
+  ctx.fillText("FLOOR " + (G.floorIndex + 1) + " / " + CHAPTERS.length + " · v1.24", VIEW_W / 2, 28);
   ctx.fillStyle = "#e6d3ba"; ctx.font = "bold 16px Georgia,serif"; ctx.fillText(chapter.name, VIEW_W / 2, 49);
   ctx.fillStyle = "#7c6960"; ctx.font = "9px Consolas"; ctx.fillText(chapter.en + " · " + (ROOM_TYPES[G.room.type] ? ROOM_TYPES[G.room.type].name : ""), VIEW_W / 2, 65);
   if (P.active) {
